@@ -20,10 +20,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['CLASSIFIER1_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['CLASSIFIER1_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['CLASSIFIER1_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -32,10 +28,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['SFF1_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['SFF1_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['SFF1_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -44,10 +36,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['SF1_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['SF1_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['SF1_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -56,10 +44,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['SF2_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['SF2_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['SF2_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -68,10 +52,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['SFF2_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['SFF2_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['SFF2_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -80,10 +60,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['CLASSIFIER2_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['CLASSIFIER2_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['CLASSIFIER2_VPP_VAGRANT_MAC']}"]
     end
   end
 
@@ -92,10 +68,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     h.vm.network :private_network, ip: "#{ENV['SF2_PROXY_IP']}"
     h.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--macaddress2", "#{ENV['SF2_PROXY_VAGRANT_MAC']}"]
-      v.customize ["modifyvm", :id, "--nic3", "intnet"]
-      v.customize ["modifyvm", :id, "--intnet3", "sfc-vpp"]
-      v.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-      v.customize ["modifyvm", :id, "--macaddress3", "#{ENV['SF2_VPP_PROXY_VAGRANT_MAC']}"]
     end
   end
 end

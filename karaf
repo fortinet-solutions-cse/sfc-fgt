@@ -1,0 +1,7 @@
+#!/bin/bash
+set -x
+./bin/stop
+sleep 1
+rm -rf data/ snapshots/ journal/ instances
+sed -iold "s/featuresBoot=.*/featuresBoot=config,standard,region,package,kar,ssh,management,odl-sfc-scf-openflow,odl-sfc-openflow-renderer,odl-sfc-ui/" etc/org.apache.karaf.features.cfg
+./bin/karaf

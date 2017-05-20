@@ -1,5 +1,13 @@
 #!/bin/bash
 set -x 
+
+
+# This needs libguestfs-tools
+# Exec: 
+# sudo apt-get install libguestfs-tools
+# sudo chmod a+r -R /var/lib/libvirt/images/
+# sudo chmod a+r -R /boot/*
+
 root_dir=$(dirname $0)
 
 nshproxy=true
@@ -118,19 +126,25 @@ if [ "${HTTPSPROXY}" == "" ] ; then
     HTTPSPROXY=${HTTPPROXY}
 fi
 
-if [ ! -e ./${UBUNTU_VBOX_IMAGE} ] ; then
+if [ ! -e ./${UBUNTU_VBOX_NAME}.box ] ; then
     wget ${UBUNTU_VBOX_URL}
 fi
 
-VBoxManage setextradata global VBoxInternal/CPUM/SSE4.1 1
-VBoxManage setextradata global VBoxInternal/CPUM/SSE4.2 1
+cp ${UBUNTU_VBOX_NAME}.box ${UBUNTU_VBOX_NAME}
+
+vagrant box remove -f ${UBUNTU_VBOX_NAME}
+vagrant mutate ${UBUNTU_VBOX_NAME} libvirt
+rm ${UBUNTU_VBOX_NAME}
+
+#VBoxManage setextradata global VBoxInternal/CPUM/SSE4.1 1
+#VBoxManage setextradata global VBoxInternal/CPUM/SSE4.2 1
 
 ### Halt current VMS in order to clean up dirty environment
 
 vagrant halt -f
 
 ### Just install one VM once but cloned for all the rest VMs ###
-vagrant up ${CLASSIFIER1_NAME} --provider virtualbox
+vagrant up ${CLASSIFIER1_NAME} --provider libvirt
 vagrant ssh ${CLASSIFIER1_NAME} -c "if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x /home/vagrant/ovs/vswitchd/ovs-vswitchd ] ; then exit 0; else exit -1; fi"
 if [ $? -ne 0 ] ; then
     vagrant ssh ${CLASSIFIER1_NAME} -c "sudo /vagrant/ovs/install_ovs.sh ${HTTPPROXY} ${HTTPSPROXY}"
@@ -140,16 +154,30 @@ if [ $? -ne 0 ] ; then
     fi
     vagrant ssh ${CLASSIFIER1_NAME} -c "if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x /home/vagrant/ovs/vswitchd/ovs-vswitchd ] ; then exit 0; else exit -1; fi"
     if [ $? -eq 0 ] ; then
-        vagrant package --output ./${UBUNTU_VBOX_IMAGE}.ready ${CLASSIFIER1_NAME}
+
+        vagrant package --output ./${UBUNTU_VBOX_NAME}.updated ${CLASSIFIER1_NAME}
         vagrant halt -f
         vagrant destroy -f
         vagrant box remove -f ${UBUNTU_VBOX_NAME}
+        mv -f ./${UBUNTU_VBOX_NAME}.updated ./${UBUNTU_VBOX_NAME}
+        vagrant box add  --name ${UBUNTU_VBOX_NAME} ${UBUNTU_VBOX_NAME}
         rm -rf ./.vagrant
-        mv -f ./${UBUNTU_VBOX_IMAGE}.ready ./${UBUNTU_VBOX_IMAGE}
+
+#        vagrant package --output ./${UBUNTU_VBOX_IMAGE}.ready ${CLASSIFIER1_NAME}
+#        vagrant halt -f
+#        vagrant destroy -f
+#        vagrant box remove -f ${UBUNTU_VBOX_NAME}
+#        vagrant box add ${UBUNTU_VBOX_NAME}
+#        rm -rf ./.vagrant
+#        mv -f ./${UBUNTU_VBOX_IMAGE}.ready ./${UBUNTU_VBOX_IMAGE}
+    else
+       echo "OVS does not seem to be installed correctly. Aborting"
+       exit -1
     fi
+       
 fi
 
-vagrant up
+vagrant up  --provider libvirt
 
 vagrant ssh ${CLASSIFIER1_NAME} -c "sudo /vagrant/ovs/setup_classifier_ovs.sh"
 

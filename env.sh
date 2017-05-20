@@ -1,6 +1,5 @@
 export UBUNTU_VBOX_URL=https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box
-export UBUNTU_VBOX_IMAGE=$(basename $UBUNTU_VBOX_URL)
-export UBUNTU_VBOX_NAME=${UBUNTU_VBOX_IMAGE}.local
+export UBUNTU_VBOX_NAME=$(basename $UBUNTU_VBOX_URL .box)
 export OVS_LOG=/var/log/openvswitch/ovs-vswitchd.log
 export DB_SOCK=/var/run/openvswitch/db.sock
 export OVS_CONF_DB="/etc/openvswitch/conf.db"

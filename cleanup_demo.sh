@@ -2,20 +2,43 @@
 
 source ./env.sh
 
-#Check if SFC is started
-karaf=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} system:name)
-if [ $? -eq 0 ] ;  then
-    ./ovs/cleanup_sfc.py
-fi
+virsh destroy ${CLASSIFIER1_NAME}
+virsh undefine ${CLASSIFIER1_NAME}
+rm -f ${CLASSIFIER1_NAME}.img
+rm -f ${CLASSIFIER1_NAME}-cidata.iso
 
-vagrant ssh ${CLASSIFIER1_NAME} -c "sudo /vagrant/ovs/cleanup_classifier.sh"
+virsh destroy ${CLASSIFIER2_NAME}
+virsh undefine ${CLASSIFIER2_NAME}
+rm -f ${CLASSIFIER2_NAME}.img
+rm -f ${CLASSIFIER2_NAME}-cidata.iso
 
-vagrant ssh ${SFF1_NAME} -c "sudo /vagrant/ovs/cleanup_sff.sh"
+virsh destroy ${SFF1_NAME}
+virsh undefine ${SFF1_NAME}
+rm -f ${SFF1_NAME}.img
+rm -f ${SFF1_NAME}-cidata.iso
 
-vagrant ssh ${SF1_NAME} -c "sudo /vagrant/ovs/cleanup_sf.sh"
+virsh destroy ${SFF2_NAME}
+virsh undefine ${SFF2_NAME}
+rm -f ${SFF2_NAME}.img
+rm -f ${SFF2_NAME}-cidata.iso
 
-vagrant ssh ${SF2_NAME} -c "sudo /vagrant/ovs/cleanup_sf.sh"
+virsh destroy ${SF1_NAME}
+virsh undefine ${SF1_NAME}
+rm -f ${SF1_NAME}.img
+rm -f ${SF1_NAME}-cidata.iso
 
-vagrant ssh ${SFF2_NAME} -c "sudo /vagrant/ovs/cleanup_sff.sh"
+virsh destroy ${SF2_NAME}
+virsh undefine ${SF2_NAME}
+rm -f ${SF2_NAME}.img
+rm -f ${SF2_NAME}-cidata.iso
 
-vagrant ssh ${CLASSIFIER2_NAME} -c "sudo /vagrant/ovs/cleanup_classifier.sh"
+virsh destroy ${SF2_PROXY_NAME}
+virsh undefine ${SF2_PROXY_NAME}
+rm -f ${SF2_PROXY_NAME}.img
+rm -f ${SF2_PROXY_NAME}-cidata.iso
+
+rm -f user-data
+rm -f meta-data
+rm -f virbr1
+
+virsh net-destroy virbr1

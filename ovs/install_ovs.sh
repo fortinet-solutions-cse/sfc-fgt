@@ -1,16 +1,16 @@
 #!/bin/bash
 set -x 
 
-if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x /home/vagrant/ovs/vswitchd/ovs-vswitchd ] ; then
+if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x ${HOME}/ovs/vswitchd/ovs-vswitchd ] ; then
    exit 0
 fi
 
-rm -rf /home/vagrant/ovs
-rm -rf /home/vagrant/ovs_nsh_patches
-rm -rf /home/vagrant/dpdk-2.2.0
-rm -f /home/vagrant/dpdk-2.2.0.tar.gz
-rm -rf /home/vagrant/dpdk-16.07
-rm -f /home/vagrant/dpdk-16.07.tar.xz
+rm -rf ${HOME}/ovs
+rm -rf ${HOME}/ovs_nsh_patches
+rm -rf ${HOME}/dpdk-2.2.0
+rm -f ${HOME}/dpdk-2.2.0.tar.gz
+rm -rf ${HOME}/dpdk-16.07
+rm -f ${HOME}/dpdk-16.07.tar.xz
 
 HTTP_PROXY=$1
 HTTPS_PROXY=$2
@@ -77,7 +77,7 @@ fi
 
 service openvswitch-switch restart
 
-if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x /home/vagrant/ovs/vswitchd/ovs-vswitchd ] ; then
+if [ -x /usr/lib/openvswitch-switch-dpdk/ovs-vswitchd -a -x ${HOME}/ovs/vswitchd/ovs-vswitchd ] ; then
    exit 0
 fi
 exit -1

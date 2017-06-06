@@ -5,48 +5,57 @@ NFV Fortigate with SFC demo
 Topology
 -------
 
-                           +-----------------+
-                           | Host (ODL SFC)  |
-                           |  192.168.60.1   |
-                           +-----------------+
-                       /      |          |     \
-                    /         |          |         \
-                /             |          |             \
-+---------------+  +--------------+   +--------------+  +---------------+
-|  classifier1  |  |    sff1      |   |     sff2     |  |  classifier2  |
-| 192.168.60.10 |  |192.168.60.20 |   |192.168.60.50 |  | 192.168.60.60 |
-+---------------+  +--------------+   +--------------+  +---------------+
+                            +-----------------+
+                            | Host (ODL SFC)  |
+                            |  192.168.60.1   |
+                            +-----------------+
+                        /      |          |     \
+                     /         |          |         \
+                 /             |          |             \
+ +---------------+  +--------------+   +--------------+  +---------------+
+ |  classifier1  |  |    sff1      |   |     sff2     |  |  classifier2  |
+ | 192.168.60.10 |  |192.168.60.20 |   |192.168.60.50 |  | 192.168.60.60 |
+ +---------------+  +--------------+   +--------------+  +---------------+
                               |          |
                               |          |
-                   +---------------+  +--------------+
-                   |  sf1(DPI-1)   |  |   sf2proxy   |
-                   |192.168.60.30  |  |192.168.60.70 |
-                   +---------------+  +--------------+
-                                         |
-                                         |
-                                      +--------------+
-                                      |   sf2(FGT)   |
-                                      |192.168.60.40 |
-                                      +--------------+
+                    +---------------+  +--------------+
+                    |  sf1(DPI-1)   |  |   sf2proxy   |
+                    |192.168.60.30  |  |192.168.60.70 |
+                    +---------------+  +--------------+
+                                          |
+                                          |
+                                       +--------------+
+                                       |   sf2(FGT)   |
+                                       |192.168.60.40 |
+                                       +--------------+
 
 Setup Demo
 ----------
-1. Install virtualbox & vagrant
-2. Start ODL SFC in host machine and install necessary features
+Note this demo should run on ubuntu 16.04 LTS
 
-   feature:install odl-sfc-scf-openflow odl-sfc-openflow-renderer odl-sfc-ui
+1. Download OpenDayLight Carbon Release:
+
+   wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+
+2. Unpack ODL in a different directory of your choice:
+
+   tar xvfz nfv-fgt/distribution-karaf-0.6.0-Carbon.tar.gz -C ..
+
+3. Copy karaf file to ODL base dir:
+
+   cp karaf ../distribution-karaf-0.6.0-Carbon/
+
+4. Execute karaf
+
+   cd ../distribution-karaf-0.6.0-Carbon/
+   ./karaf
+
+5. In another console start demo:
+
+   ./run_demo.sh 
 
 
-   Notice: please do stop, clean up, then restart ODL SFC when you run this demo in order that demo can run successfully.
+This will download Ubuntu trusty x86_64 cloud image and install all the necessary packages into host and VMs, so please make sure to export http_proxy and http_proxy environment variables
 
-   opendaylight-user@root>shutdown -f
-   opendaylight-user@root>
-   $ rm -rf data snapshots journal instances
-   $ ./bin/karaf
 
-3. Run demo
-
-  This will download Ubuntu trusty x86_64 vagrant image and install all the necessary packages into host and vagrant VMs, so please make sure to export http_proxy and http_proxy environment variables if you have proxy behind your network before run demo script, demo script will inject these proxy settings to vagrant VMS.
-
-     $ ./run_demo.sh
 

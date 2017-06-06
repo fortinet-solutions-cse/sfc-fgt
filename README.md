@@ -33,26 +33,26 @@ Setup Demo
 ----------
 Note this demo should run on ubuntu 16.04 LTS
 
-1. Download OpenDayLight Carbon Release:
+   1. Download OpenDayLight Carbon Release:
 
-   wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+      wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
 
-2. Unpack ODL in a different directory of your choice:
+   2. Unpack ODL in a different directory of your choice:
 
-   tar xvfz nfv-fgt/distribution-karaf-0.6.0-Carbon.tar.gz -C ..
+      tar xvfz nfv-fgt/distribution-karaf-0.6.0-Carbon.tar.gz -C ..
 
-3. Copy karaf file to ODL base dir:
+   3. Copy karaf file to ODL base dir:
 
-   cp karaf ../distribution-karaf-0.6.0-Carbon/
+      cp karaf ../distribution-karaf-0.6.0-Carbon/
 
-4. Execute karaf
+   4. Execute karaf
 
-   cd ../distribution-karaf-0.6.0-Carbon/
-   ./karaf
+      cd ../distribution-karaf-0.6.0-Carbon/
+      ./karaf
 
-5. In another console start demo:
+   5. In another console start demo:
 
-   ./run_demo.sh 
+      ./run_demo.sh 
 
 
 This will download Ubuntu trusty x86_64 cloud image and install all the necessary packages into host and VMs, so please make sure to export http_proxy and http_proxy environment variables

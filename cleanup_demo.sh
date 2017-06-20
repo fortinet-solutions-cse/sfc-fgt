@@ -40,5 +40,9 @@ rm -f ${SF2_PROXY_NAME}-cidata.iso
 rm -f user-data
 rm -f meta-data
 rm -f virbr1
+rm -f virbr2
+rm -f virbr3
 
 virsh net-destroy virbr1
+virsh net-destroy virbr2
+virsh net-destroy virbr3

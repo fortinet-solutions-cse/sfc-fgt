@@ -162,6 +162,8 @@ cat >virbr2 <<EOF
   <name>virbr2</name>
   <bridge name='virbr2' stp='off' delay='0' />
   <mac address='52:54:00:79:7c:c4'/>
+  <host mac='${SF2_MAC}' ip='${SF2_IP}'/>
+  <host mac='${SF2_PROXY_MAC2}' ip='${SF2_PROXY_IP2}'/>
 </network>
 EOF
 
@@ -177,6 +179,8 @@ cat >virbr3 <<EOF
   <name>virbr3</name>
   <bridge name='virbr3' stp='off' delay='0' />
   <mac address='52:54:00:79:7c:c5'/>
+  <host mac='${SF2_MAC2}' ip='${SF2_IP2}'/>
+  <host mac='${SF2_PROXY_MAC3}' ip='${SF2_PROXY_IP3}'/>
 </network>
 EOF
 
@@ -190,6 +194,9 @@ EOF
 sudo virsh net-create virbr1
 sudo virsh net-create virbr2
 sudo virsh net-create virbr3
+
+sudo brctl setageing virbr2 0
+sudo brctl setageing virbr3 0
 
 #************************************************
 # Prepare data for cloud init
@@ -353,10 +360,7 @@ config firewall policy
         set action accept
         set schedule "always"
         set service "ALL"
-        set utm-status enable
-        set av-profile "default"
-        set profile-protocol-options "default"
-        set ssl-ssh-profile "certificate-inspection"
+        set logtraffic disable
     next
 end
 
@@ -454,11 +458,10 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP
 ./ovs/setup_sfc_proxy.py
  
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo ifconfig eth1 up; \
-                                                                                 sudo ifconfig eth2 up; \
-                                                                                 sudo dhclient eth1; \
-                                                                                 sudo dhclient eth2"
+                                                                                 sudo ifconfig eth2 up;"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo apt-get install -y python3-pip;sudo pip3 install hexdump"
 
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo ./proxy.py --encap_if eth0 --unencap_out_if eth1 --unencap_in_if eth2"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo /vagrant/proxy.py --encap_if eth0 --unencap_in_if eth2 --unencap_out_if eth1" &
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
  
@@ -484,6 +487,8 @@ virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared
 
 
 rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${SF2_PROXY_IP}:/vagrant/
+
+cp ../PycharmProjects/nsh-proxy/proxy.py .;rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${SF2_PROXY_IP}:/vagrant/
 
 
 config system interface
@@ -543,15 +548,68 @@ diag sniffer packet port3
 diag debug enable
 diag debug flow filter add 192.168.2.2
 #diag debug flow show console enable
-diag debug flow trace start 10          
+diag debug flow trace start 100
 diag debug enable
 
 
 diag debug application httpsd -1 (FYI)
 
 
+""""""""""
+sudo brctl setageing virbr2 0
+sudo brctl setageing virbr3 0
+
+diagnose netlink brctl list
+diagnose netlink brctl name host vwp1_v.b
 
 
+
+config system settings
+set multicast-skip-policy enable
+end
+
+config system interface
+edit "port2"
+set broadcast-forward enable
+next
+
+
+config firewall multicast-policy
+edit 1
+set action accept
+next
+end
+
+config firewall multicast-policy
+edit 1
+set action accept
+set srcintf port2
+set dstintf port2
+set srcaddr 0.0.0.0
+set dstaddr 0.0.0.0
+next
+end
+
+
+config system session-ttl
+   set default 0
+     config port
+       edit 443
+         set protocol 6
+         set timeout 3600
+         set end-port 443
+         set start-port 443
+        next
+      end
+end
+
+""""""""""""
+
+config system interface
+edit "port2"
+set broadcast-forward enable
+next
+end
 
 
 FortiGate-VM64-KVM (vxlan1) # 0800
@@ -591,3 +649,12 @@ cat >test <<EOF
 EOF
 
 sudo virsh net-create test
+
+
+sudo wireshark -i vnet9 &
+sudo wireshark -i vnet7 &
+sudo wireshark -i vnet8 &
+sudo wireshark -i vnet10 &
+
+
+sudo wireshark -i vnet5 &

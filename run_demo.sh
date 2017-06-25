@@ -447,7 +447,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SFF1_IP} "sudo /vagrant/ovs/setup_sff_ovs.sh"
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "sudo nohup /vagrant/ovs/setup_sf.sh & sleep 1" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "sudo nohup /vagrant/ovs/setup_sf.sh & sleep 1 2>&1 >sf1_log.txt" &
 
 #ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_IP} "sudo nohup /vagrant/ovs/setup_sf.sh & sleep 1" &
 
@@ -461,11 +461,11 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} 
                                                                                  sudo ifconfig eth2 up;"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo apt-get install -y python3-pip;sudo pip3 install hexdump"
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo /vagrant/proxy.py --encap_if eth0 --unencap_in_if eth2 --unencap_out_if eth1" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo pkill proxy; sudo /vagrant/proxy.py --encap_if eth0 --unencap_in_if eth2 --unencap_out_if eth1 2>&1 >proxy.log" &
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
  
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 -T1 http://192.168.2.2/"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/"
 
 exit 0
 

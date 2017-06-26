@@ -8,14 +8,8 @@ sudo apt-get install -y sshpass wget curl openssh-client
 #Manual
 #Generate public key in default dir (~/.ssh/id_rsa.pub)
 
-
-
-
-
 #Optional
 sudo apt-get install -y virt-manager
 
-
-
-#Things done
-set etc/sysctl.conf: ipv4.forward (uncomment)
+# Things done
+# Check this: set etc/sysctl.conf: ipv4.forward (uncomment)

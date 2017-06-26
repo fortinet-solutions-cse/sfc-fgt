@@ -40,6 +40,12 @@ fi
 sudo echo "Please input password for sudo commands:"
 
 #************************************************
+# Clean previous installations
+#************************************************
+
+./cleanup_demo.sh
+
+#************************************************
 # Get SFC Proxy
 #************************************************
 
@@ -148,12 +154,6 @@ if [ ! -e ${UBUNTU_IMAGE_NAME} ]; then
       exit -1
    fi
 fi
-
-#************************************************
-# Clean previous installations in virsh
-#************************************************
-
-./cleanup_demo.sh
 
 #************************************************
 # Prepare data for virsh network

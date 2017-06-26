@@ -37,6 +37,11 @@ virsh undefine ${SF2_PROXY_NAME}
 rm -f ${SF2_PROXY_NAME}.img
 rm -f ${SF2_PROXY_NAME}-cidata.iso
 
+rm -f fgt-logs.qcow2
+rm -f fortios.qcow2
+rm -f proxy.py*
+rm -rf cfg-drv-fgt
+
 rm -f user-data
 rm -f meta-data
 rm -f virbr1

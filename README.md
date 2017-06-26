@@ -52,7 +52,11 @@ Note this demo should run on ubuntu 16.04 LTS
 
    5. In another console start demo:
 
-      ./run_demo.sh 
+      ./run_demo.sh <location_of_fortigate_qcow2_vm>
+
+   6. To check traffic flow run:
+
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null 192.168.60.10 "sudo ip netns exec app wget -t1 http://192.168.2.2/"
 
 
 This will download Ubuntu trusty x86_64 cloud image and install all the necessary packages into host and VMs, so please make sure to export http_proxy and http_proxy environment variables

@@ -1,4 +1,4 @@
-NFV Fortigate with SFC demo
+Fortigate VNF in SFC demo
 ===========================
 
 

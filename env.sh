@@ -1,5 +1,6 @@
 export UBUNTU_IMAGE_URL=https://cloud-images.ubuntu.com/releases/14.04/release/ubuntu-14.04-server-cloudimg-amd64-disk1.img
 export UBUNTU_IMAGE_NAME=$(basename ${UBUNTU_IMAGE_URL})
+export PREVIOUS_SAVED_IMAGE_NAME=last_classifier1_image_saved_as_reference.img
 
 export OVS_LOG=/var/log/openvswitch/ovs-vswitchd.log
 export DB_SOCK=/var/run/openvswitch/db.sock

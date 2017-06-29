@@ -188,3 +188,35 @@ sudo wireshark -i vnet10 &
 
 
 sudo wireshark -i vnet5 &
+
+
+
+virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name sff2 --file sff2.img --mac=${SFF2_MAC}
+sudo virt-sysprep -a sff2.img --hostname sff2 --firstboot-command 'sudo ssh-keygen -A'
+
+
+
+
+VM_NAME=sff2
+   virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name ${VM_NAME} --file ${VM_NAME}.img --mac=${VM_MAC[${VM_NAME}]}
+   if [ $? -ne 0 ]; then
+     echo "Error cloning image. Aborting"
+     exit -1
+   fi
+
+   sleep 3
+
+   sudo virt-sysprep -a ${VM_NAME}.img --hostname ${VM_NAME} --firstboot-command 'sudo ssh-keygen -A'
+
+   cat >meta-data <<EOF
+instance-id: ${VM_NAME}
+local-hostname: ${VM_NAME}
+EOF
+
+   rm -rf ${VM_NAME}-cidata.iso
+   genisoimage -output ${VM_NAME}-cidata.iso -volid cidata -joliet -rock user-data meta-data
+   chmod 666 ${VM_NAME}-cidata.iso
+
+   virsh change-media ${VM_NAME} hdb --eject --config --force
+   virsh change-media ${VM_NAME} hdb ${PWD}/${VM_NAME}-cidata.iso --insert --config --force
+

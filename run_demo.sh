@@ -13,7 +13,6 @@
 # Took ideas from opendaylight/sfc project
 #************************************************
 
-set -x
 source env.sh
 
 #************************************************
@@ -40,7 +39,7 @@ fi
 sudo echo "Please input password for sudo commands:"
 
 #************************************************
-# Clean previous installations
+# Clean previous executions
 #************************************************
 
 ./cleanup_demo.sh
@@ -66,13 +65,13 @@ fi
 echo "Install and wait for sfc features: ${features}"
 
 #************************************************
-#Uninstall unnecessary features automatically
+#Uninstall unnecessary ODL features automatically
 #************************************************
 
 sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:uninstall ${uninstall_features}
 
 #************************************************
-#Install necessary features automatically
+#Install necessary ODL features automatically
 #************************************************
 
 sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:install odl-restconf ${features}
@@ -107,7 +106,7 @@ if [ $installed -ne 1 ] ; then
 fi
 
 #************************************************
-# For OVS and OVS_DPDK use case, must make sure renderer and classifier are intialized successfully
+# Ensure renderer is initialized successfully
 #************************************************
 
 retries=10
@@ -143,20 +142,32 @@ if [ ! -f ${HOME}/.ssh/id_rsa.pub ]; then
 fi
 
 #************************************************
-# Download base image, trusty 14.04, cloud based
+# Check existence of previous image with OVS compiled
+# If not, download base image, trusty 14.04, cloud based
 #************************************************
 
-if [ ! -e ${UBUNTU_IMAGE_NAME} ]; then
-   wget ${UBUNTU_IMAGE_URL}
-   qemu-img resize ${UBUNTU_IMAGE_NAME} +1Gb
-   if [ $? -ne 0 ] ; then
-      echo "Failed to resize ubuntu base image. Exiting..."
-      exit -1
-   fi
+if [ -e ${PREVIOUS_SAVED_IMAGE_NAME} ]; then
+
+   cp ${PREVIOUS_SAVED_IMAGE_NAME} ${CLASSIFIER1_NAME}.img
+   SKIP_OVS_COMPILATION=true
+
+else
+
+    if [ ! -e ${UBUNTU_IMAGE_NAME} ]; then
+
+       wget ${UBUNTU_IMAGE_URL}
+       qemu-img resize ${UBUNTU_IMAGE_NAME} +1Gb
+       if [ $? -ne 0 ] ; then
+          echo "Failed to resize ubuntu base image. Exiting..."
+          exit -1
+       fi
+    fi
+    cp ${UBUNTU_IMAGE_NAME} ${CLASSIFIER1_NAME}.img
+
 fi
 
 #************************************************
-# Prepare data for virsh network
+# Set virtual networks with virsh
 #************************************************
 
 cat >virbr1 <<EOF
@@ -213,7 +224,7 @@ sudo brctl setageing virbr2 0
 sudo brctl setageing virbr3 0
 
 #************************************************
-# Prepare data for cloud init
+# Prepare Cloud Init for first VM
 #************************************************
 
 cat >meta-data <<EOF
@@ -236,16 +247,16 @@ EOF
 rm -rf ${CLASSIFIER1_NAME}-cidata.iso
 genisoimage -output ${CLASSIFIER1_NAME}-cidata.iso -volid cidata -joliet -rock user-data meta-data
 
-sudo cp ubuntu-14.04-server-cloudimg-amd64-disk1.img ${CLASSIFIER1_NAME}.img
 sudo virt-sysprep -a ${CLASSIFIER1_NAME}.img --root-password password:m \
-    --firstboot-command 'useradd -m -p "" vagrant ; chage -d 0 vagrant'
+    --delete /var/lib/cloud/* \
+    --firstboot-command 'useradd -m -p "" vagrant ; chage -d 0 vagrant; ssh-keygen -A; rm -rf /var/lib/cloud/*; cloud-init init'
 
 virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${CLASSIFIER1_NAME} --ram 2048 --vcpus 1 --disk ${CLASSIFIER1_NAME}.img,size=3 --disk ${CLASSIFIER1_NAME}-cidata.iso,device=cdrom --network bridge=virbr1,mac=${CLASSIFIER1_MAC}
 
 ssh-keygen -R ${CLASSIFIER1_IP}
 alias ssh='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
-until ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo mkdir /vagrant/"
+until ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo mkdir -p /vagrant/"
 do
   sleep 1
   echo "."
@@ -256,22 +267,33 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP
 rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${CLASSIFIER1_IP}:/vagrant/
 
 #************************************************
-# Install OVS on classifier1
+# Install OVS on first VM
 #************************************************
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo /vagrant/ovs/install_ovs.sh"
-if [ $? -ne 0 ] ; then
-   echo "Failed to install ovs on ${CLASSIFIER1_NAME}"
-   exit -1
+if [ ! ${SKIP_OVS_COMPILATION} ];then
+   ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo /vagrant/ovs/install_ovs.sh"
+   if [ $? -ne 0 ] ; then
+      echo "Failed to install ovs on ${CLASSIFIER1_NAME}"
+      exit -1
+   fi
 fi
 
 #************************************************
-# Stop classifier1 (prior to clone image)
+# Stop first VM (prior to clone image)
 #************************************************
 
-sleep 30
+sleep 45
 virsh destroy ${CLASSIFIER1_NAME}
-sleep 30
+
+#************************************************
+# Copy image with OVS for later reuse
+#************************************************
+
+if [ ! ${SKIP_OVS_COMPILATION} ];then
+   sudo cp ${CLASSIFIER1_NAME}.img ${PREVIOUS_SAVED_IMAGE_NAME}
+fi
+
+sleep 15
 
 #************************************************
 # Clone images for the rest of vms
@@ -288,7 +310,7 @@ do
 
   echo "Cloning $VM_NAME with MAC: ${VM_MAC[${VM_NAME}]}"
 
-   virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name ${VM_NAME} --file ${VM_NAME}.img --mac=${VM_MAC[${VM_NAME}]} 
+   virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name ${VM_NAME} --file ${VM_NAME}.img --mac=${VM_MAC[${VM_NAME}]}
    if [ $? -ne 0 ]; then
      echo "Error cloning image. Aborting"
      exit -1
@@ -302,12 +324,13 @@ do
 instance-id: ${VM_NAME}
 local-hostname: ${VM_NAME}
 EOF
-
+sleep 3
    rm -rf ${VM_NAME}-cidata.iso
    genisoimage -output ${VM_NAME}-cidata.iso -volid cidata -joliet -rock user-data meta-data
    chmod 666 ${VM_NAME}-cidata.iso
-
+sleep 1
    virsh change-media ${VM_NAME} hdb --eject --config --force
+sleep 1
    virsh change-media ${VM_NAME} hdb ${PWD}/${VM_NAME}-cidata.iso --insert --config --force
 done
 
@@ -315,16 +338,17 @@ done
 # Start everything up
 #************************************************
 
-VMs="${CLASSIFIER1_NAME} \
-   ${CLASSIFIER2_NAME} \
-   ${SFF1_NAME} \
-   ${SFF2_NAME} \
+VMs="${SF2_PROXY_NAME} \
    ${SF1_NAME} \
-   ${SF2_PROXY_NAME}"
+   ${SFF2_NAME} \
+   ${SFF1_NAME} \
+   ${CLASSIFIER2_NAME} \
+   ${CLASSIFIER1_NAME}"
 
 for VM_NAME in $VMs;
 do
  virsh start $VM_NAME
+ sleep 1
 done
 
 #************************************************
@@ -392,7 +416,7 @@ virsh attach-interface --domain ${SF2_PROXY_NAME} --type network \
 
 
 #************************************************
-# Quick test to ensure OVS is running
+# Quick test to check VM content and connectivity
 #************************************************
 
 VM_IPs="${CLASSIFIER1_IP} \

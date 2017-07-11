@@ -232,16 +232,27 @@ instance-id: ${CLASSIFIER1_NAME}
 local-hostname: ${CLASSIFIER1_NAME}
 EOF
 
+#Note password is always 'm'
+
 cat >user-data <<EOF
 #cloud-config
 users:
   - name: ${USER}
     gecos: Host User Replicated
-    passwd: 4096$WZV/rmpx9X$M0ZfYfQookX7TXTBf64j31kvRZu3HNPESAVpv8B61qVW89oI86HB2Ihs9pAUrHTvnigdgvUJdBoAaLSG2L0Vi0
+    passwd: \$1\$xyz\$Ilzr7fdQW.frxCgmgIgVL0
     ssh-authorized-keys:
       - $(cat ${HOME}/.ssh/id_rsa.pub)
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
+    inactive: false
+    lock_passwd: false
+  - name: sfc
+    gecos: sfc additional user
+    passwd: \$1\$xyz\$Ilzr7fdQW.frxCgmgIgVL0
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    inactive: false
+    lock_passwd: false
 EOF
 
 rm -rf ${CLASSIFIER1_NAME}-cidata.iso

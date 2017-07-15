@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 #To be done in ubuntu 16.04.2LTS
 
 sudo apt-get install -y  openjdk-8-jdk

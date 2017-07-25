@@ -2,6 +2,7 @@
 
 ifconfig eth1 up;
 ifconfig eth2 up;
+apt-get update
 apt-get install -y python3-pip
 pip3 install hexdump
 

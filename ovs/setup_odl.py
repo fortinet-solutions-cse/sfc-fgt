@@ -18,7 +18,9 @@ CLASSIFIER1_IP=Template("$CLASSIFIER1_IP").substitute(os.environ)
 SFF1_IP=Template("$SFF1_IP").substitute(os.environ)
 SF1_IP=Template("$SF1_IP").substitute(os.environ)
 SF2_IP=Template("$SF2_IP").substitute(os.environ)
+SF3_IP=Template("$SF3_IP").substitute(os.environ)
 SF2_PROXY_IP=Template("$SF2_PROXY_IP").substitute(os.environ)
+SF3_PROXY_IP=Template("$SF3_PROXY_IP").substitute(os.environ)
 SFF2_IP=Template("$SFF2_IP").substitute(os.environ)
 CLASSIFIER2_IP=Template("$CLASSIFIER2_IP").substitute(os.environ)
 proxies = {
@@ -91,6 +93,13 @@ def get_service_nodes_data():
                 "ip-mgmt-address": SF2_IP
             },
             {
+                "name": "sf3",
+                "service-function": [
+                    "firewall-2"
+                ],
+                "ip-mgmt-address": SF3_IP
+            },
+            {
                 "name": "sff2",
                 "service-function": [
                 ],
@@ -145,7 +154,27 @@ def get_service_functions_data():
                         }
                     }
                 ]
+            },
+            {
+                "name": "firewall-2",
+                "ip-mgmt-address": SF3_IP,
+                "type": "firewall2",
+                "sf-data-plane-locator": [
+                    {
+                        "name": "firewall-2-dpl",
+                        "port": 4789,
+                        "ip": SF3_IP,
+                        "transport": "service-locator:vxlan",
+                        "service-function-forwarder": "SFF2",
+                        "service-function-proxy:proxy-data-plane-locator": {
+                            "port": 4790,
+                            "ip": SF3_PROXY_IP,
+                            "transport": "service-locator:vxlan-gpe"
+                        }
+                    }
+                ]
             }
+
         ]
     }
 }
@@ -241,6 +270,13 @@ def get_service_function_forwarders_data():
                             "sf-dpl-name": "firewall-1-dpl",
                             "sff-dpl-name": "sff2-dpl"
                         }
+                    },
+                    {
+                        "name": "firewall-2",
+                        "sff-sf-data-plane-locator": {
+                            "sf-dpl-name": "firewall-2-dpl",
+                            "sff-dpl-name": "sff2-dpl"
+                        }
                     }
                 ]
             },
@@ -290,7 +326,21 @@ def get_service_function_chains_data():
                         "type": "firewall"
                     }
                 ]
+            },
+            {
+                "name": "SFC2",
+                "sfc-service-function": [
+                    {
+                        "name": "dpi-abstract1",
+                        "type": "dpi"
+                    },
+                    {
+                        "name": "firewall-abstract2",
+                        "type": "firewall2"
+                    }
+                ]
             }
+
         ]
     }
 }
@@ -308,7 +358,15 @@ def get_service_function_paths_data():
                 "starting-index": 255,
                 "symmetric": "true",
                 "context-metadata": "NSH1"
+            },
+            {
+                "name": "SFP2",
+                "service-chain-name": "SFC2",
+                "starting-index": 255,
+                "symmetric": "true",
+                "context-metadata": "NSH1"
             }
+
         ]
     }
 }
@@ -339,6 +397,14 @@ def get_rendered_service_path_data():
     "input": {
         "name": "RSP1",
         "parent-service-function-path": "SFP1",
+    }
+}
+
+def get_rendered_service_path_data2():
+    return {
+    "input": {
+        "name": "RSP2",
+        "parent-service-function-path": "SFP2",
     }
 }
 
@@ -492,5 +558,7 @@ if __name__ == "__main__":
     put(controller, DEFAULT_PORT, get_service_function_acl_uri(), get_service_function_acl_data(), True)
     print "sending rendered service path"
     post(controller, DEFAULT_PORT, get_rendered_service_path_uri(), get_rendered_service_path_data(), True)
+    print "sending rendered service path-sfc2"
+    post(controller, DEFAULT_PORT, get_rendered_service_path_uri(), get_rendered_service_path_data2(), True)
     print "sending service function classifiers"
     put(controller, DEFAULT_PORT, get_service_function_classifiers_uri(), get_service_function_classifiers_data(), True)

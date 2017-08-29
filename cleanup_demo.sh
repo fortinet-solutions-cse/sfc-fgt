@@ -32,22 +32,39 @@ virsh undefine ${SF2_NAME}
 rm -f ${SF2_NAME}.img
 rm -f ${SF2_NAME}-cidata.iso
 
+virsh destroy ${SF3_NAME}
+virsh undefine ${SF3_NAME}
+rm -f ${SF3_NAME}.img
+rm -f ${SF3_NAME}-cidata.iso
+
 virsh destroy ${SF2_PROXY_NAME}
 virsh undefine ${SF2_PROXY_NAME}
 rm -f ${SF2_PROXY_NAME}.img
 rm -f ${SF2_PROXY_NAME}-cidata.iso
 
+virsh destroy ${SF3_PROXY_NAME}
+virsh undefine ${SF3_PROXY_NAME}
+rm -f ${SF3_PROXY_NAME}.img
+rm -f ${SF3_PROXY_NAME}-cidata.iso
+
 rm -f fgt-logs.qcow2
+rm -f fgt-logs2.qcow2
 rm -f fortios.qcow2
+rm -f fortios2.qcow2
 rm -f proxy.py*
 rm -rf cfg-drv-fgt
+rm -rf cfg-drv-fgt2
 
 rm -f user-data
 rm -f meta-data
 rm -f virbr1
 rm -f virbr2
 rm -f virbr3
+rm -f virbr4
+rm -f virbr5
 
 virsh net-destroy virbr1
 virsh net-destroy virbr2
 virsh net-destroy virbr3
+virsh net-destroy virbr4
+virsh net-destroy virbr5

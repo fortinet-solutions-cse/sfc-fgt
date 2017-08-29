@@ -189,8 +189,11 @@ cat >virbr1 <<EOF
       <host mac='${SFF2_MAC}' name='${SFF2_NAME}' ip='${SFF2_IP}'/>
       <host mac='${SF1_MAC}' name='${SF1_NAME}' ip='${SF1_IP}'/>
       <host mac='${SF2_MAC}' name='${SF2_NAME}' ip='${SF2_IP}'/>
+      <host mac='${SF3_MAC}' name='${SF3_NAME}' ip='${SF3_IP}'/>
       <host mac='${SF2_MAC_ADMIN}' ip='${SF2_IP_ADMIN}'/>
+      <host mac='${SF3_MAC_ADMIN}' ip='${SF3_IP_ADMIN}'/>
       <host mac='${SF2_PROXY_MAC}' name='${SF2_PROXY_NAME}' ip='${SF2_PROXY_IP}'/>
+      <host mac='${SF3_PROXY_MAC}' name='${SF3_PROXY_NAME}' ip='${SF3_PROXY_IP}'/>
     </dhcp>
   </ip>
 </network>
@@ -216,12 +219,36 @@ cat >virbr3 <<EOF
 </network>
 EOF
 
+cat >virbr4 <<EOF
+<network>
+  <name>virbr4</name>
+  <bridge name='virbr4' stp='off' delay='0' />
+  <mac address='52:54:00:79:7c:c6'/>
+  <host mac='${SF3_MAC}' ip='${SF3_IP}'/>
+  <host mac='${SF3_PROXY_MAC2}' ip='${SF3_PROXY_IP2}'/>
+</network>
+EOF
+
+cat >virbr5 <<EOF
+<network>
+  <name>virbr5</name>
+  <bridge name='virbr5' stp='off' delay='0' />
+  <mac address='52:54:00:79:7c:c7'/>
+  <host mac='${SF3_MAC2}' ip='${SF3_IP2}'/>
+  <host mac='${SF3_PROXY_MAC3}' ip='${SF3_PROXY_IP3}'/>
+</network>
+EOF
+
 sudo virsh net-create virbr1
 sudo virsh net-create virbr2
 sudo virsh net-create virbr3
+sudo virsh net-create virbr4
+sudo virsh net-create virbr5
 
 sudo brctl setageing virbr2 0
 sudo brctl setageing virbr3 0
+sudo brctl setageing virbr4 0
+sudo brctl setageing virbr5 0
 
 #************************************************
 # Prepare Cloud Init for first VM
@@ -314,7 +341,8 @@ declare -A VM_MAC=( [${CLASSIFIER2_NAME}]=${CLASSIFIER2_MAC} \
    [${SFF1_NAME}]=${SFF1_MAC} \
    [${SFF2_NAME}]=${SFF2_MAC} \
    [${SF1_NAME}]=${SF1_MAC} \
-   [${SF2_PROXY_NAME}]=${SF2_PROXY_MAC})
+   [${SF2_PROXY_NAME}]=${SF2_PROXY_MAC} \
+   [${SF3_PROXY_NAME}]=${SF3_PROXY_MAC})
 
 for VM_NAME in ${!VM_MAC[@]};
 do
@@ -350,6 +378,7 @@ done
 #************************************************
 
 VMs="${SF2_PROXY_NAME} \
+   ${SF3_PROXY_NAME} \
    ${SF1_NAME} \
    ${SFF2_NAME} \
    ${SFF1_NAME} \
@@ -411,6 +440,56 @@ EOF
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF2_NAME}-cidata.iso cfg-drv-fgt
 virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF2_NAME} --ram 1024 --vcpus 1 --disk fortios.qcow2,size=3 --disk fgt-logs.qcow2,size=30 --disk ${SF2_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF2_MAC_ADMIN},model=virtio --network network=virbr2,mac=${SF2_MAC},model=virtio --network network=virbr3,mac=${SF2_MAC2},model=virtio
 
+
+#************************************************
+# Start Second FGT-VM
+#************************************************
+
+rm -f fortios2.qcow2
+rm -rf cfg-drv-fgt2
+rm -rf ${SF3_NAME}-cidata.iso
+
+cp ${FORTIGATE_QCOW2} ./fortios2.qcow2
+
+mkdir -p cfg-drv-fgt2/openstack/latest/
+mkdir -p cfg-drv-fgt2/openstack/content/
+
+cat >cfg-drv-fgt/openstack/content/0000 <<EOF
+-----BEGIN FGT VM LICENSE-----
+<empty....fill your own!>
+-----END FGT VM LICENSE-----
+EOF
+
+cat >cfg-drv-fgt/openstack/latest/user_data <<EOF
+config system interface
+edit "port1"
+set ip 192.168.122.80/24
+next
+end
+config system virtual-wire-pair
+    edit "vwp1"
+        set member "port2" "port3"
+    next
+end
+config firewall policy
+    edit 1
+        set name "vwp1-policy"
+        set srcintf "port2" "port3"
+        set dstintf "port2" "port3"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set logtraffic disable
+    next
+end
+
+EOF
+
+sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF3_NAME}-cidata.iso cfg-drv-fgt2
+virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF3_NAME} --ram 1024 --vcpus 1 --disk fortios2.qcow2,size=3 --disk fgt-logs2.qcow2,size=30 --disk ${SF3_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF3_MAC_ADMIN},model=virtio --network network=virbr4,mac=${SF3_MAC},model=virtio --network network=virbr5,mac=${SF3_MAC2},model=virtio
+
 sleep 45
 
 #************************************************
@@ -427,6 +506,19 @@ virsh attach-interface --domain ${SF2_PROXY_NAME} --type network \
 
 
 #************************************************
+# Add two more interfaces to SF3_PROXY
+#************************************************
+
+virsh attach-interface --domain ${SF3_PROXY_NAME} --type network \
+        --source virbr4 \
+        --mac ${SF3_PROXY_MAC2} --config --live
+
+virsh attach-interface --domain ${SF3_PROXY_NAME} --type network \
+        --source virbr5 \
+        --mac ${SF3_PROXY_MAC3} --config --live
+
+
+#************************************************
 # Quick test to check VM content and connectivity
 #************************************************
 
@@ -436,8 +528,11 @@ VM_IPs="${CLASSIFIER1_IP} \
    ${SFF2_IP} \
    ${SF1_IP} \
    ${SF2_IP} \
+   ${SF3_IP} \
    ${SF2_PROXY_IP} \
-   ${SF2_IP_ADMIN}"
+   ${SF3_PROXY_IP} \
+   ${SF2_IP_ADMIN} \
+   ${SF3_IP_ADMIN}"
 
 for VM_IP in $VM_IPs;
 do
@@ -451,7 +546,8 @@ VM_IPs="${CLASSIFIER1_IP} \
    ${SFF1_IP} \
    ${SFF2_IP} \
    ${SF1_IP} \
-   ${SF2_PROXY_IP}"
+   ${SF2_PROXY_IP} \
+   ${SF3_PROXY_IP}"
 
 for VM_IP in $VM_IPs;
 do
@@ -472,6 +568,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "sudo 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SFF2_IP} "sudo /vagrant/ovs/setup_sff_ovs.sh"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo /vagrant/ovs/setup_classifier_ovs.sh" &
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf2proxy.log" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf3proxy.log" &
 
 #************************************************
 # Configure OpenDayLight server

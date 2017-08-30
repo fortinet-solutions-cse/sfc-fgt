@@ -454,13 +454,13 @@ cp ${FORTIGATE_QCOW2} ./fortios2.qcow2
 mkdir -p cfg-drv-fgt2/openstack/latest/
 mkdir -p cfg-drv-fgt2/openstack/content/
 
-cat >cfg-drv-fgt/openstack/content/0000 <<EOF
+cat >cfg-drv-fgt2/openstack/content/0000 <<EOF
 -----BEGIN FGT VM LICENSE-----
 <empty....fill your own!>
 -----END FGT VM LICENSE-----
 EOF
 
-cat >cfg-drv-fgt/openstack/latest/user_data <<EOF
+cat >cfg-drv-fgt2/openstack/latest/user_data <<EOF
 config system interface
 edit "port1"
 set ip 192.168.122.80/24
@@ -581,5 +581,8 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} 
 #************************************************
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/"
+
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 ping -c 5 192.168.2.2"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 wget -t1 http://192.168.2.2/"
 
 exit 0

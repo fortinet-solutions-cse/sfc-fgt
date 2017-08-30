@@ -18,7 +18,7 @@ do
    echo -e "\n${VM_NAME} configuration"
    echo "================================="
    ssh ${VM_IP[${VM_NAME}]} 'sudo ovs-vsctl show'
-   echo -e "\n${VM_NAME} OopenFlow Rules"
+   echo -e "\n${VM_NAME} OpenFlow Rules"
    echo "================================="
    ssh ${VM_IP[${VM_NAME}]} 'sudo ovs-ofctl dump-flows br-sfc'
    echo -e "\n${VM_NAME} Data Path Flows"

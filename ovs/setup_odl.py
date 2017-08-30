@@ -427,7 +427,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/24",
-                "source-ipv4-network": "192.168.2.0/24",
+                "source-ipv4-network": "192.168.2.0/25",
                 "protocol": "1",
                 "source-port-range": {
                     "lower-port": "0"
@@ -444,7 +444,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/24",
-                "source-ipv4-network": "192.168.2.0/24",
+                "source-ipv4-network": "192.168.2.0/25",
                 "protocol": "6",
                 "source-port-range": {
                     "lower-port": 0
@@ -468,7 +468,7 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP1-Reverse"
               },
               "matches": {
-                "destination-ipv4-network": "192.168.2.0/24",
+                "destination-ipv4-network": "192.168.2.0/25",
                 "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "1",
                 "source-port-range": {
@@ -485,7 +485,91 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP1-Reverse"
               },
               "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "source-ipv4-network": "192.168.2.0/24",
+                "protocol": "6",
+                "source-port-range": {
+                    "lower-port": 80
+                },
+                "destination-port-range": {
+                    "lower-port": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL3",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE31",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP2"
+              },
+              "matches": {
                 "destination-ipv4-network": "192.168.2.0/24",
+                "source-ipv4-network": "192.168.2.128/25",
+                "protocol": "1",
+                "source-port-range": {
+                    "lower-port": "0"
+                },
+                "destination-port-range": {
+                    "lower-port": "0"
+                }
+              }
+            },
+            {
+              "rule-name": "ACE32",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP2"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/24",
+                "source-ipv4-network": "192.168.2.128/25",
+                "protocol": "6",
+                "source-port-range": {
+                    "lower-port": 0
+                },
+                "destination-port-range": {
+                    "lower-port": 80
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL4",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE41",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP2-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.128/25",
+                "source-ipv4-network": "192.168.2.0/24",
+                "protocol": "1",
+                "source-port-range": {
+                    "lower-port": "0"
+                },
+                "destination-port-range": {
+                    "lower-port": "0"
+                }
+              }
+            },
+            {
+              "rule-name": "ACE42",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP2-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.128/25",
                 "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "6",
                 "source-port-range": {
@@ -533,6 +617,32 @@ def get_service_function_classifiers_data():
         ],
         "acl": {
             "name": "ACL2",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier1-2",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier1",
+            "interface": "veth-br2"
+          }
+        ],
+        "acl": {
+            "name": "ACL3",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier2-2",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier2",
+            "interface": "veth-br"
+          }
+        ],
+        "acl": {
+            "name": "ACL4",
             "type": "ietf-access-control-list:ipv4-acl"
          }
       }

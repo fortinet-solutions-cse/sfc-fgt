@@ -2,6 +2,19 @@
 
 #************************************************
 # Service Function Chain demo with Fortigate
+#   _____ ______ _____            _ _   _
+#  / ____|  ____/ ____|          (_) | | |
+# | (___ | |__ | |      __      ___| |_| |__
+#  \___ \|  __|| |      \ \ /\ / / | __| '_ \
+#  ____) | |   | |____   \ V  V /| | |_| | | |
+# |_____/|_|    \_____|   \_/\_/ |_|\__|_| |_|
+#  ______         _   _  _____       _
+# |  ____|       | | (_)/ ____|     | |
+# | |__ ___  _ __| |_ _| |  __  __ _| |_ ___
+# |  __/ _ \| '__| __| | | |_ |/ _` | __/ _ \
+# | | | (_) | |  | |_| | |__| | (_| | ||  __/
+# |_|  \___/|_|   \__|_|\_____|\__,_|\__\___|
+#
 #
 # Use: ./run_demo.sh <location_of_fortigate_vm>
 #
@@ -37,6 +50,19 @@ if [[ "$(realpath $FORTIGATE_QCOW2)" == "$(pwd)/fortios.qcow2" ]]; then
 fi
 
 sudo echo "Please input password for sudo commands:"
+
+#************************************************
+# Get OpenDayLight
+#************************************************
+
+if [ ! -e distribution-karaf-0.6.0-Carbon ]; then
+  wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+  tar xvfz distribution-karaf-0.6.0-Carbon.tar.gz
+  cp karaf distribution-karaf-0.6.0-Carbon/
+fi
+
+gnome-terminal --working-directory ${PWD}/distribution-karaf-0.6.0-Carbon/ -x ./karaf & disown
+sleep 10
 
 #************************************************
 # Clean previous executions
@@ -560,7 +586,7 @@ done
 
 #************************************************
 # Final preparation of VMs
-#***********************************************
+#************************************************
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo /vagrant/ovs/setup_classifier_ovs.sh"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SFF1_IP} "sudo /vagrant/ovs/setup_sff_ovs.sh"

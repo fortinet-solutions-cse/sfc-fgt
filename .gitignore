@@ -8,4 +8,5 @@ cfg-drv-fgt
 fgt-logs.qcow2
 meta-data
 user-data
+distribution-karaf-*
 

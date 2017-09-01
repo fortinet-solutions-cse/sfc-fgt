@@ -37,33 +37,18 @@ Note this demo should run on ubuntu 16.04 LTS
 
       ./installation.sh
 
-   2. Download OpenDayLight Carbon Release:
-
-      wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
-
-   3. Unpack ODL in a different directory of your choice:
-
-      tar xvfz nfv-fgt/distribution-karaf-0.6.0-Carbon.tar.gz -C ..
-
-   4. Copy karaf file to ODL base dir:
-
-      cp karaf ../distribution-karaf-0.6.0-Carbon/
-
-   5. Execute karaf
-
-      cd ../distribution-karaf-0.6.0-Carbon/
-      ./karaf
-
-   6. In another console start demo:
+   2. Start demo:
 
       ./run_demo.sh <location_of_fortigate_qcow2_vm>
 
-   7. To check traffic flow run:
+   3. To check traffic flow run:
 
       ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null 192.168.60.10 "sudo ip netns exec app wget -t1 http://192.168.2.2/"
 
 
-This will download Ubuntu trusty x86_64 cloud image and install all the necessary packages into host and VMs, so please make sure to export http_proxy and http_proxy environment variables
+Demo is based on: https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+
+This demo will download and install OpenDayLight. It will also get Ubuntu trusty x86_64 cloud image and install all the necessary packages into host and VMs, so please make sure to export http_proxy and http_proxy environment variables.
 
 
 

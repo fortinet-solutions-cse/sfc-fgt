@@ -324,7 +324,7 @@ done
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo chmod 777 /vagrant/"
 
-rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${CLASSIFIER1_IP}:/vagrant/
+rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --exclude distribution-karaf-* --max-size=1048576 ./*  ${CLASSIFIER1_IP}:/vagrant/
 
 #************************************************
 # Install OVS on first VM

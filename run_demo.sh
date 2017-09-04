@@ -484,9 +484,17 @@ EOF
 
 cat >cfg-drv-fgt2/openstack/latest/user_data <<EOF
 config system interface
-edit "port1"
-set ip 192.168.122.80/24
-next
+   edit "port1"
+      set ip 192.168.122.80/24
+   next
+   edit "port2"
+      set mtu-override enable
+      set mtu 1400
+   next
+   edit "port3"
+      set mtu-override enable
+      set mtu 1400
+   next
 end
 config system virtual-wire-pair
     edit "vwp1"

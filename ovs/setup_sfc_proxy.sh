@@ -6,12 +6,10 @@ apt-get update
 apt-get install -y python3-pip
 pip3 install hexdump
 
+
+
 pkill proxy.py
 pkill tcpdump
-
-tcpdump -i eth1 -l >/dev/null &
-
-tcpdump -i eth2 -l >/dev/null &
 
 ethtool -K eth1 tx off
 

@@ -2,11 +2,12 @@
 *.iso
 *.img
 virbr*
-fortios.qcow2
+fortios*.qcow2
 proxy.py
-cfg-drv-fgt
-fgt-logs.qcow2
+cfg-drv-fgt*
+fgt-logs*.qcow2
 meta-data
 user-data
 distribution-karaf-*
+.idea
 

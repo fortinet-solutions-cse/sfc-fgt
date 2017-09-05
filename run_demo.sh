@@ -49,8 +49,6 @@ if [[ "$(realpath $FORTIGATE_QCOW2)" == "$(pwd)/fortios.qcow2" ]]; then
    exit -1
 fi
 
-sudo echo "Please input password for sudo commands:"
-
 #************************************************
 # Get OpenDayLight
 #************************************************
@@ -214,10 +212,6 @@ cat >virbr1 <<EOF
       <host mac='${SFF1_MAC}' name='${SFF1_NAME}' ip='${SFF1_IP}'/>
       <host mac='${SFF2_MAC}' name='${SFF2_NAME}' ip='${SFF2_IP}'/>
       <host mac='${SF1_MAC}' name='${SF1_NAME}' ip='${SF1_IP}'/>
-      <host mac='${SF2_MAC}' name='${SF2_NAME}' ip='${SF2_IP}'/>
-      <host mac='${SF3_MAC}' name='${SF3_NAME}' ip='${SF3_IP}'/>
-      <host mac='${SF2_MAC_ADMIN}' ip='${SF2_IP_ADMIN}'/>
-      <host mac='${SF3_MAC_ADMIN}' ip='${SF3_IP_ADMIN}'/>
       <host mac='${SF2_PROXY_MAC}' name='${SF2_PROXY_NAME}' ip='${SF2_PROXY_IP}'/>
       <host mac='${SF3_PROXY_MAC}' name='${SF3_PROXY_NAME}' ip='${SF3_PROXY_IP}'/>
     </dhcp>

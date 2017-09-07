@@ -15,7 +15,6 @@ ethtool -K eth1 tx off
 
 ethtool -K eth2 tx off
 
-ifconfig eth0 promisc
 ifconfig eth1 promisc
 ifconfig eth2 promisc
 

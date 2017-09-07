@@ -511,7 +511,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/24",
-                "source-ipv4-network": "192.168.2.128/25",
+                "source-ipv4-network": "192.168.2.129/32",
                 "protocol": "1",
                 "source-port-range": {
                     "lower-port": "0"
@@ -528,7 +528,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/24",
-                "source-ipv4-network": "192.168.2.128/25",
+                "source-ipv4-network": "192.168.2.129/32",
                 "protocol": "6",
                 "source-port-range": {
                     "lower-port": 0
@@ -552,7 +552,7 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP2-Reverse"
               },
               "matches": {
-                "destination-ipv4-network": "192.168.2.128/25",
+                "destination-ipv4-network": "192.168.2.129/32",
                 "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "1",
                 "source-port-range": {
@@ -569,7 +569,7 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP2-Reverse"
               },
               "matches": {
-                "destination-ipv4-network": "192.168.2.128/25",
+                "destination-ipv4-network": "192.168.2.129/32",
                 "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "6",
                 "source-port-range": {

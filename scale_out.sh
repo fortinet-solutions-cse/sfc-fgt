@@ -193,7 +193,7 @@ end
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF_NAME}-cidata.iso cfg-drv-fgt${VM_ID}
-virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF_NAME} --ram 1024 --vcpus 1 --disk fortios${VM_ID}.qcow2,size=3 --disk fgt-logs${VM_ID}.qcow2,size=30 --disk ${SF_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF_MAC_ADMIN},model=virtio --network bridge=virbr4,mac=${SF_MAC},model=virtio --network bridge=virbr5,mac=${SF_MAC2},model=virtio
+virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF_NAME} --ram 1024 --vcpus 1 --disk fortios${VM_ID}.qcow2,size=3 --disk fgt-logs${VM_ID}.qcow2,size=30 --disk ${SF_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF_MAC_ADMIN},model=virtio --network bridge=virbr${VM_ID},mac=${SF_MAC},model=virtio --network bridge=virbr${VM_PROXY_ID},mac=${SF_MAC2},model=virtio
 
 sleep 45
 

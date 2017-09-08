@@ -9,7 +9,7 @@
 #  ____) | (_| (_| | |  __/ |__| | |_| | |_
 # |_____/ \___\__,_|_|\___|\____/ \__,_|\__|
 #
-# Use: ./scale_out.sh <id_of_new_vm>
+# Use: ./scale_out.sh <id_of_new_vm> <fortios qcow image location> <network cidr for sfc>
 #
 # Note id should be between 90 and 100
 #
@@ -56,6 +56,19 @@ if [[ "$(realpath $FORTIGATE_QCOW2)" == "$(pwd)/fortios.qcow2" ]]; then
    echo "FortiGate image can not be named fortios.qcow2 in this directory. Choose different location/name"
    exit -1
 fi
+
+
+#************************************************
+# Check Network CIDR for Service Chain
+#************************************************
+if [ -z "$3" ]; then
+  echo "Need Network CIDR for Service Chain"
+  exit -1
+fi
+
+NETWORK_CIDR=$3
+NETWORK_CIDR_IP=${NETWORK_CIDR%%/*}
+
 
 #************************************************
 # Prepare variables
@@ -221,23 +234,23 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF_PROXY_IP} "
 #************************************************
 
 cat > classifier1.sh << EOF
-ip netns add app92
-ip link add veth-app92 type veth peer name veth-br92
-ovs-vsctl add-port br-sfc veth-br92
-ip link set dev veth-br92 up
-ip link set veth-app92 netns app92
+ip netns add app${VM_ID}
+ip link add veth-app${VM_ID} type veth peer name veth-br${VM_ID}
+ovs-vsctl add-port br-sfc veth-br${VM_ID}
+ip link set dev veth-br${VM_ID} up
+ip link set veth-app${VM_ID} netns app${VM_ID}
 
-ip netns exec app92 ifconfig veth-app92 192.168.2.210/24 up
-ip netns exec app92 ip link set dev veth-app92 addr 00:00:11:11:11:92
-ip netns exec app92 arp -s 192.168.2.2 00:00:22:22:22:22 -i veth-app92
-ip netns exec app92 ip link set dev veth-app92 up
-ip netns exec app92 ip link set dev lo up
-ip netns exec app92 ifconfig veth-app92 mtu 1400
-ip netns exec app92 ethtool -K veth-app92 tx off
+ip netns exec app${VM_ID} ifconfig veth-app${VM_ID} ${NETWORK_CIDR_IP}/24 up
+ip netns exec app${VM_ID} ip link set dev veth-app92 addr 00:00:11:11:11:${VM_ID}
+ip netns exec app${VM_ID} arp -s 192.168.2.2 00:00:22:22:22:22 -i veth-app${VM_ID}
+ip netns exec app${VM_ID} ip link set dev veth-app${VM_ID} up
+ip netns exec app${VM_ID} ip link set dev lo up
+ip netns exec app${VM_ID} ifconfig veth-app${VM_ID} mtu 1400
+ip netns exec app${VM_ID} ethtool -K veth-app${VM_ID} tx off
 EOF
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} 'sudo bash -s -x ' < classifier1.sh
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo ip netns exec app arp -s 192.168.2.210 00:00:11:11:11:92 -i veth-app"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo ip netns exec app arp -s ${NETWORK_CIDR_IP} 00:00:11:11:11:${VM_ID} -i veth-app"
 
 rm classifier1.sh
 
@@ -246,7 +259,7 @@ rm classifier1.sh
 #************************************************
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-node:service-nodes/service-node/sf92 \
+  http://localhost:8181/restconf/config/service-node:service-nodes/service-node/sf${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -254,10 +267,10 @@ curl -X PUT \
   -d '{
     "service-node": [
         {
-            "name": "sf92",
-            "ip-mgmt-address": "192.168.70.92",
+            "name": "sf'${VM_ID}'",
+            "ip-mgmt-address": "192.168.70.'${VM_ID}'",
             "service-function": [
-                "firewall-92"
+                "firewall-'${VM_ID}'"
             ]
         }
     ]
@@ -265,7 +278,7 @@ curl -X PUT \
 
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function:service-functions/service-function/firewall-92 \
+  http://localhost:8181/restconf/config/service-function:service-functions/service-function/firewall-${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -273,16 +286,16 @@ curl -X PUT \
   -d '{
     "service-function": [
         {
-            "name": "firewall-92",
-            "ip-mgmt-address": "192.168.70.92",
-            "type": "firewall92",
+            "name": "firewall-'${VM_ID}'",
+            "ip-mgmt-address": "192.168.70.'${VM_ID}'",
+            "type": "firewall'${VM_ID}'",
             "sf-data-plane-locator": [
                 {
-                    "name": "firewall-92-dpl",
+                    "name": "firewall-'${VM_ID}'-dpl",
                     "port": 4789,
-                    "ip": "192.168.70.92",
+                    "ip": "192.168.70.'${VM_ID}'",
                     "service-function-proxy:proxy-data-plane-locator": {
-                        "ip": "192.168.60.93",
+                        "ip": "192.168.60.'${VM_PROXY_ID}'",
                         "port": 4790,
                         "transport": "service-locator:vxlan-gpe"
                     },
@@ -295,7 +308,7 @@ curl -X PUT \
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF2/service-function-dictionary/firewall-92 \
+  http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF2/service-function-dictionary/firewall-${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -303,17 +316,17 @@ curl -X PUT \
   -d '{
     "service-function-dictionary": [
         {
-            "name": "firewall-92",
+            "name": "firewall-'${VM_ID}'",
             "sff-sf-data-plane-locator": {
                 "sff-dpl-name": "sff2-dpl",
-                "sf-dpl-name": "firewall-92-dpl"
+                "sf-dpl-name": "firewall-'${VM_ID}'-dpl"
             }
         }
     ]
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-chain:service-function-chains/service-function-chain/SFC92 \
+  http://localhost:8181/restconf/config/service-function-chain:service-function-chains/service-function-chain/SFC${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -321,15 +334,15 @@ curl -X PUT \
   -d '{
     "service-function-chain": [
         {
-            "name": "SFC92",
+            "name": "SFC'${VM_ID}'",
             "sfc-service-function": [
                 {
                     "name": "dpi-abstract1",
                     "type": "dpi"
                 },
                 {
-                    "name": "firewall-abstract92",
-                    "type": "firewall92"
+                    "name": "firewall-abstract'${VM_ID}'",
+                    "type": "firewall'${VM_ID}'"
                 }
             ]
         }
@@ -337,7 +350,7 @@ curl -X PUT \
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-path:service-function-paths/service-function-path/SFP92 \
+  http://localhost:8181/restconf/config/service-function-path:service-function-paths/service-function-path/SFP${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -345,17 +358,17 @@ curl -X PUT \
   -d '{
     "service-function-path": [
         {
-            "name": "SFP92",
+            "name": "SFP'${VM_ID}'",
             "starting-index": 255,
             "symmetric": true,
-            "service-chain-name": "SFC92",
+            "service-chain-name": "SFC'${VM_ID}'",
             "context-metadata": "NSH1"
         }
     ]
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/ietf-access-control-list:access-lists/acl/ietf-access-control-list:ipv4-acl/ACL92 \
+  http://localhost:8181/restconf/config/ietf-access-control-list:access-lists/acl/ietf-access-control-list:ipv4-acl/ACL${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -364,11 +377,11 @@ curl -X PUT \
     "acl": [
         {
             "acl-type": "ietf-access-control-list:ipv4-acl",
-            "acl-name": "ACL92",
+            "acl-name": "ACL'${VM_ID}'",
             "access-list-entries": {
                 "ace": [
                     {
-                        "rule-name": "ACE92-1",
+                        "rule-name": "ACE'${VM_ID}'-1",
                         "matches": {
                             "source-port-range": {
                                 "lower-port": 0
@@ -376,16 +389,16 @@ curl -X PUT \
                             "destination-port-range": {
                                 "lower-port": 0
                             },
-                            "source-ipv4-network": "192.168.2.210/32",
+                            "source-ipv4-network": "'${NETWORK_CIDR}'",
                             "destination-ipv4-network": "192.168.2.0/24",
                             "protocol": 1
                         },
                         "actions": {
-                            "service-function-acl:rendered-service-path": "RSP92"
+                            "service-function-acl:rendered-service-path": "RSP'${VM_ID}'"
                         }
                     },
                     {
-                        "rule-name": "ACE92-2",
+                        "rule-name": "ACE'${VM_ID}'-2",
                         "matches": {
                             "source-port-range": {
                                 "lower-port": 0
@@ -393,12 +406,12 @@ curl -X PUT \
                             "destination-port-range": {
                                 "lower-port": 80
                             },
-                            "source-ipv4-network": "192.168.2.210/32",
+                            "source-ipv4-network": "'${NETWORK_CIDR}'",
                             "destination-ipv4-network": "192.168.2.0/24",
                             "protocol": 6
                         },
                         "actions": {
-                            "service-function-acl:rendered-service-path": "RSP92"
+                            "service-function-acl:rendered-service-path": "RSP'${VM_ID}'"
                         }
                     }
                 ]
@@ -409,7 +422,7 @@ curl -X PUT \
 
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/ietf-access-control-list:access-lists/acl/ietf-access-control-list:ipv4-acl/ACL92-Reverse \
+  http://localhost:8181/restconf/config/ietf-access-control-list:access-lists/acl/ietf-access-control-list:ipv4-acl/ACL${VM_ID}-Reverse \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -418,11 +431,11 @@ curl -X PUT \
     "acl": [
         {
             "acl-type": "ietf-access-control-list:ipv4-acl",
-            "acl-name": "ACL92-Reverse",
+            "acl-name": "ACL'${VM_ID}'-Reverse",
             "access-list-entries": {
                 "ace": [
                     {
-                        "rule-name": "ACE92-1-Reverse",
+                        "rule-name": "ACE'${VM_ID}'-1-Reverse",
                         "matches": {
                             "source-port-range": {
                                 "lower-port": 0
@@ -431,15 +444,15 @@ curl -X PUT \
                                 "lower-port": 0
                             },
                             "source-ipv4-network": "192.168.2.0/24",
-                            "destination-ipv4-network": "192.168.2.210/32",
+                            "destination-ipv4-network": "'${NETWORK_CIDR}'",
                             "protocol": 1
                         },
                         "actions": {
-                            "service-function-acl:rendered-service-path": "RSP92-Reverse"
+                            "service-function-acl:rendered-service-path": "RSP'${VM_ID}'-Reverse"
                         }
                     },
                     {
-                        "rule-name": "ACE92-2-Reverse",
+                        "rule-name": "ACE'${VM_ID}'-2-Reverse",
                         "matches": {
                             "source-port-range": {
                                 "lower-port": 80
@@ -448,11 +461,11 @@ curl -X PUT \
                                 "lower-port": 0
                             },
                             "source-ipv4-network": "192.168.2.0/24",
-                            "destination-ipv4-network": "192.168.2.210/32",
+                            "destination-ipv4-network": "'${NETWORK_CIDR}'",
                             "protocol": 6
                         },
                         "actions": {
-                            "service-function-acl:rendered-service-path": "RSP92-Reverse"
+                            "service-function-acl:rendered-service-path": "RSP'${VM_ID}'-Reverse"
                         }
                     }
                 ]
@@ -470,13 +483,13 @@ curl -X POST \
   -H 'postman-token: 3f80c118-b0c5-7f33-dd17-5e65d651ba1b' \
   -d '{
 	"input": {
-        "name": "RSP92",
-        "parent-service-function-path": "SFP92"
+        "name": "RSP'${VM_ID}'",
+        "parent-service-function-path": "SFP'${VM_ID}'"
     }
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-classifier:service-function-classifiers/service-function-classifier/ServiceFunctionClassifier92 \
+  http://localhost:8181/restconf/config/service-function-classifier:service-function-classifiers/service-function-classifier/ServiceFunctionClassifier${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -485,15 +498,15 @@ curl -X PUT \
 {
   "service-function-classifier": [
     {
-      "name": "ServiceFunctionClassifier92",
+      "name": "ServiceFunctionClassifier'${VM_ID}'",
       "acl": {
         "type": "ietf-access-control-list:ipv4-acl",
-        "name": "ACL92"
+        "name": "ACL'${VM_ID}'"
       },
       "scl-service-function-forwarder": [
         {
           "name": "Classifier1",
-          "interface": "veth-br92"
+          "interface": "veth-br'${VM_ID}'"
         }
       ]
     }
@@ -502,7 +515,7 @@ curl -X PUT \
 
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-classifier:service-function-classifiers/service-function-classifier/ServiceFunctionClassifier92-Reverse \
+  http://localhost:8181/restconf/config/service-function-classifier:service-function-classifiers/service-function-classifier/ServiceFunctionClassifier${VM_ID}-Reverse \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -510,10 +523,10 @@ curl -X PUT \
   -d '{
   "service-function-classifier": [
     {
-      "name": "ServiceFunctionClassifier92-Reverse",
+      "name": "ServiceFunctionClassifier'${VM_ID}'-Reverse",
       "acl": {
         "type": "ietf-access-control-list:ipv4-acl",
-        "name": "ACL92-Reverse"
+        "name": "ACL'${VM_ID}'-Reverse"
       },
       "scl-service-function-forwarder": [
         {

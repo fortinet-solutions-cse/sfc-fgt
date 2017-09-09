@@ -59,7 +59,7 @@ if [ ! -e distribution-karaf-0.6.0-Carbon ]; then
   cp karaf distribution-karaf-0.6.0-Carbon/
 fi
 
-gnome-terminal --working-directory ${PWD}/distribution-karaf-0.6.0-Carbon/ -x ./karaf & disown
+xterm -geometry 110x25+650+300 -e "cd ${PWD}/distribution-karaf-0.6.0-Carbon/ && ./karaf" &
 sleep 10
 
 #************************************************
@@ -193,6 +193,7 @@ fi
 #************************************************
 # Set virtual networks with virsh
 #************************************************
+xterm -geometry 70x25+1400+40 -fg yellow -e watch virsh net-list --all &
 
 cat >virbr1 <<EOF
 <network>
@@ -269,6 +270,8 @@ sudo virsh net-create virbr5
 #************************************************
 # Prepare Cloud Init for first VM
 #************************************************
+
+xterm -geometry 70x25+1400+550 -fg yellow -e watch virsh list --all &
 
 cat >meta-data <<EOF
 instance-id: ${CLASSIFIER1_NAME}
@@ -603,6 +606,16 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} 
 #************************************************
 # Demo: Run ICMP and HTTP traffic
 #************************************************
+xterm -geometry 80x30+20+20 -bg darkblue -title "SF2PROXY Log" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
+
+xterm -geometry 80x30+600+20 -bg darkblue -title "SF3PROXY Log" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
+
+xterm -geometry 80x30+20+450 -bg grey -fg black -title "User 1 shell" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app bash" &
+
+xterm -geometry 80x30+600+450 -bg grey -fg black -title "User 2 shell" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 bash" &
+
+
+
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/"
 

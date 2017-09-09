@@ -241,7 +241,7 @@ ip link set dev veth-br${VM_ID} up
 ip link set veth-app${VM_ID} netns app${VM_ID}
 
 ip netns exec app${VM_ID} ifconfig veth-app${VM_ID} ${NETWORK_CIDR_IP}/24 up
-ip netns exec app${VM_ID} ip link set dev veth-app92 addr 00:00:11:11:11:${VM_ID}
+ip netns exec app${VM_ID} ip link set dev veth-app${VM_ID} addr 00:00:11:11:11:${VM_ID}
 ip netns exec app${VM_ID} arp -s 192.168.2.2 00:00:22:22:22:22 -i veth-app${VM_ID}
 ip netns exec app${VM_ID} ip link set dev veth-app${VM_ID} up
 ip netns exec app${VM_ID} ip link set dev lo up

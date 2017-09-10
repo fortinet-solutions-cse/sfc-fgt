@@ -538,6 +538,6 @@ curl -X PUT \
   ]
 }'
 
-xterm -geometry 80x30+1000+220 -bg darkblue -title "SF${VM_ID}PROXY Log" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 80x30+1000+220 -bg darkblue -title "SF${VM_ID}PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF_PROXY_IP} "tail -F proxy.log" &
 
-xterm -geometry 80x30+1000+650 -bg grey -fg black -title "USER ${VM_ID} shell" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app${VM_ID} bash" &
+xterm -geometry 80x30+1000+650 -bg grey -fg black -title "USER ${VM_ID} shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app${VM_ID} bash" &

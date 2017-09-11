@@ -9,9 +9,10 @@
 #  ____) | (_| (_| | |  __/ |__| | |_| | |_
 # |_____/ \___\__,_|_|\___|\____/ \__,_|\__|
 #
-# Use: ./scale_out.sh <id_of_new_vm> <fortios qcow image location> <network cidr for sfc>
+# Use: ./scale_out.sh <id_of_new_vm> <network cidr for sfc> <sff_id> <fortios qcow image location>
 #
-# Note id should be between 90 and 100
+# id should be between 90 and 100
+# sff Id should be 1 or 2
 #
 # Miguel Angel Muñoz Gonzalez
 # magonzalez(at)fortinet.com
@@ -37,17 +38,40 @@ if [ ${VM_ID} -lt 90 ]; then
 fi
 
 #************************************************
+# Check Network CIDR for Service Chain
+#************************************************
+if [ -z "$2" ]; then
+  echo "Need Network CIDR for Service Chain"
+  exit -1
+fi
+
+NETWORK_CIDR=$2
+NETWORK_CIDR_IP=${NETWORK_CIDR%%/*}
+
+
+#************************************************
+# Check SFF where FGT VM will be attached
+#************************************************
+if [ -z "$3" ]; then
+  echo "Need SFF Id where FGT will be attached"
+  exit -1
+fi
+
+SFF_ID=$3
+
+
+#************************************************
 # Check Fortigate VM existence
 #************************************************
 
-if [ -z "$2" ]; then
+if [ -z "$4" ]; then
   echo "Need location of Fortigate image"
   exit -1
 fi
-result=$(file $2)
+result=$(file $4)
 if [[ $result == *"QEMU QCOW Image (v2)"* ]]; then
-   echo "Supplied Fortigate image is in: $2"
-   FORTIGATE_QCOW2=$2
+   echo "Supplied Fortigate image is in: $4"
+   FORTIGATE_QCOW2=$4
 else
    echo "Supplied Fortigate image does not look a qcow2 file"
    exit -1
@@ -56,19 +80,6 @@ if [[ "$(realpath $FORTIGATE_QCOW2)" == "$(pwd)/fortios.qcow2" ]]; then
    echo "FortiGate image can not be named fortios.qcow2 in this directory. Choose different location/name"
    exit -1
 fi
-
-
-#************************************************
-# Check Network CIDR for Service Chain
-#************************************************
-if [ -z "$3" ]; then
-  echo "Need Network CIDR for Service Chain"
-  exit -1
-fi
-
-NETWORK_CIDR=$3
-NETWORK_CIDR_IP=${NETWORK_CIDR%%/*}
-
 
 #************************************************
 # Prepare variables
@@ -299,7 +310,7 @@ curl -X PUT \
                         "port": 4790,
                         "transport": "service-locator:vxlan-gpe"
                     },
-                    "service-function-forwarder": "SFF2",
+                    "service-function-forwarder": "SFF'${SFF_ID}'",
                     "transport": "service-locator:vxlan"
                 }
             ]
@@ -308,7 +319,7 @@ curl -X PUT \
 }'
 
 curl -X PUT \
-  http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF2/service-function-dictionary/firewall-${VM_ID} \
+  http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF${SFF_ID}/service-function-dictionary/firewall-${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4=' \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
@@ -318,7 +329,7 @@ curl -X PUT \
         {
             "name": "firewall-'${VM_ID}'",
             "sff-sf-data-plane-locator": {
-                "sff-dpl-name": "sff2-dpl",
+                "sff-dpl-name": "sff'${SFF_ID}'-dpl",
                 "sf-dpl-name": "firewall-'${VM_ID}'-dpl"
             }
         }

@@ -53,10 +53,14 @@ curl -X DELETE \
   http://localhost:8181/restconf/config/service-function:service-functions/service-function/firewall-${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4='
 
+#Todo: Fix below delete. Instead of issuing two delete ops just use the one with the proper SFF
 curl -X DELETE \
   http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF2/service-function-dictionary/firewall-${VM_ID} \
   -H 'authorization: Basic YWRtaW46YWRtaW4='
 
+curl -X DELETE \
+  http://localhost:8181/restconf/config/service-function-forwarder:service-function-forwarders/service-function-forwarder:service-function-forwarder/SFF1/service-function-dictionary/firewall-${VM_ID} \
+  -H 'authorization: Basic YWRtaW46YWRtaW4='
 
 curl -X DELETE \
   http://localhost:8181/restconf/config/service-function-chain:service-function-chains/service-function-chain/SFC${VM_ID} \

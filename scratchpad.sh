@@ -220,3 +220,97 @@ EOF
    virsh change-media ${VM_NAME} hdb --eject --config --force
    virsh change-media ${VM_NAME} hdb ${PWD}/${VM_NAME}-cidata.iso --insert --config --force
 
+
+
+
+
+
+
+#===========================
+#Networking SFC commands
+#===========================
+
+neutron net-create netM --provider:network_type vxlan
+neutron subnet-create --name netM_subnet netM 192.168.7.0/24
+
+#image creation
+
+neutron port-create --name p1M netM
+neutron port-create --name p2M netM
+neutron port-create --name p3M netM
+neutron port-create --name p4M netM
+neutron port-create --name p5M netM
+neutron port-create --name p6M netM
+
+p1Mid=$(neutron port-list|grep p1M|awk  '{print $2}')
+p2Mid=$(neutron port-list|grep p2M|awk  '{print $2}')
+p3Mid=$(neutron port-list|grep p3M|awk  '{print $2}')
+p4Mid=$(neutron port-list|grep p4M|awk  '{print $2}')
+p5Mid=$(neutron port-list|grep p5M|awk  '{print $2}')
+p6Mid=$(neutron port-list|grep p6M|awk  '{print $2}')
+
+
+openstack keypair create  t1 >t1.pem
+
+openstack flavor create --ram 512 --disk 8 --vcpus 1 m1.smaller
+openstack flavor create --ram 512 --disk 1 --vcpus 1 m1.tiny
+
+nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p1Mid --nic port-id=$p2Mid --key-name t1 vm1M
+nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p3Mid --nic port-id=$p4Mid --key-name t1 vm2M
+nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p5Mid --nic port-id=$p6Mid --key-name t1 vm3M
+
+
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix 192.168.7.13/32  --destination-ip-prefix 192.168.7.15/32  --protocol tcp  --source-port 23:65535  --destination-port 80:80 --logical-source-port p2M --logical-destination-port p5M fc1M 
+
+neutron port-pair-create --ingress=p1M --egress=p2M pp1M
+neutron port-pair-create --ingress=p3M --egress=p4M pp2M
+neutron port-pair-create --ingress=p5M --egress=p6M pp3M
+
+neutron port-pair-group-create --port-pair pp1M --port-pair pp2M pg1M
+neutron port-pair-group-create --port-pair pp3M pg2M
+
+neutron port-chain-create --port-pair-group pg1M --port-pair-group pg2M --flow-classifier fc1M pc1M
+
+
+
+--- Status ---
+
+neutron subnet-list
+neutron net-list
+
+nova list
+
+neutron flow-classifier-list
+neutron port-pair-list
+neutron port-pair-group-list
+neutron port-chain-list
+
+--- Delete ---
+neutron port-chain-delete pc1M
+
+neutron port-pair-group-delete pg2M
+neutron port-pair-group-delete pg1M
+
+neutron port-pair-delete pp3M
+neutron port-pair-delete pp2M
+neutron port-pair-delete pp1M
+
+neutron flow-classifier-delete fc1M
+
+nova delete vm3M
+nova delete vm2M
+nova delete vm1M
+
+neutron port-delete p6M
+neutron port-delete p5M
+neutron port-delete p4M
+neutron port-delete p3M
+neutron port-delete p2M
+neutron port-delete p1M
+
+--- Scratch ---
+
+nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name t1 testVM
+nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
+
+

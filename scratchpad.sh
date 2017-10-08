@@ -76,7 +76,7 @@ diag sniffer packet port3
 
 
 diag debug enable
-diag debug flow filter add 192.168.2.2
+diag debug flow filter add 192.168.7.12
 #diag debug flow show console enable
 diag debug flow trace start 100
 diag debug enable
@@ -84,6 +84,7 @@ diag debug enable
 
 diag debug application httpsd -1 (FYI)
 
+diagnose sniffer packet any 'dst port 80' 2 50 l
 
 """"""""""
 sudo brctl setageing virbr2 0
@@ -225,53 +226,328 @@ EOF
 
 
 
+diagnose sniffer packet any 'dst port 80' 2 50 l
+diagnose sniffer packet port2
+diagnose sniffer packet port3
 
+
+diag debug flow filter add 192.168.7.10
+diag debug flow filter dport 80
+diag debug flow show function-name enable
+diag debug flow show iprope enable
+diag debug flow trace start 100
+
+diag debug enable
+
+Backup:
+
+config system global
+set admin-scp enable
+end
+
+scp admin@x.x.x.5:sys_config ./
+
+#===========================
+#Install VNC Server
+#===========================
+sudo apt install -y xfce4 xfce4-goodies tightvncserver xfonts-base
+vncserver
+vncserver -kill :1
+mv ~/.vnc/xstartup ~/.vnc/xstartup.bak
+
+cat > ~/.vnc/xstartup <<EOF
+#!/bin/bash
+xrdb $HOME/.Xresources
+startxfce4 &
+EOF
+sudo chmod +x ~/.vnc/xstartup
+vncserver
+grep 59.. ~/.vnc/*.log
+
+#===========================
+#Configure OpenStack
+#===========================
+
+NEUTRON_EXT_NET_GW="10.10.10.1"
+NEUTRON_EXT_NET_CIDR="10.10.10.0/24"
+
+NEUTRON_EXT_NET_NAME="ext_net" # Unused
+NEUTRON_DNS=$NEUTRON_EXT_NET_GW
+NEUTRON_FLOAT_RANGE_START="10.10.10.12"
+NEUTRON_FLOAT_RANGE_END="10.10.10.253"
+
+NEUTRON_FIXED_NET_CIDR="192.168.16.0/22"
+
+# Determine the tenant id for the configured tenant name.
+export TENANT_ID="$(openstack project list | grep $OS_TENANT_NAME | awk '{ print $2 }')"
+
+if [ "$TENANT_ID" = "" ]; then
+	echo "Unable to find tenant ID, keystone auth problem"
+	exit 2
+fi
+
+echo "Configuring Openstack Neutron Networking"
+
+#neutron net-show ext_net > /dev/null 2>&1 || neutron net-create ext_net --tenant-id $TENANT_ID -- --router:external=True
+#EXTERNAL_NETWORK_ID=$(neutron net-show ext_net | grep " id" | awk '{print $4}')
+#neutron subnet-show ext_net_subnet > /dev/null 2>&1 || neutron subnet-create ext_net $NEUTRON_EXT_NET_CIDR --name ext_net_subnet --tenant-id $TENANT_ID \
+#--allocation-pool start=$NEUTRON_FLOAT_RANGE_START,end=$NEUTRON_FLOAT_RANGE_END \
+#--gateway $NEUTRON_EXT_NET_GW --disable-dhcp --dns_nameservers $NEUTRON_DNS list=true
+
+
+openstack network create --share --external --disable-port-security --provider-physical-network flat --provider-network-type flat ext_net
+openstack subnet create --network ext_net \
+  --allocation-pool start=$NEUTRON_FLOAT_RANGE_START,end=$NEUTRON_FLOAT_RANGE_END \
+  --dns-nameserver $NEUTRON_DNS --gateway $NEUTRON_EXT_NET_GW \
+  --subnet-range $NEUTRON_EXT_NET_CIDR ext_net_subnet
+
+#Create mgmt network for neutron for tenant VMs
+#neutron net-show mgmt > /dev/null 2>&1 || neutron net-create mgmt
+#neutron subnet-show mgmt_subnet > /dev/null 2>&1 || neutron subnet-create mgmt $NEUTRON_FIXED_NET_CIDR -- --name mgmt_subnet --dns_nameservers list=true $NEUTRON_DNS
+#SUBNET_ID=$(neutron subnet-show mgmt_subnet | grep " id" | awk '{print $4}')
+
+openstack network create --disable-port-security mgmt
+openstack subnet create --network mgmt \
+  --subnet-range $NEUTRON_FIXED_NET_CIDR mgmt_subnet
+
+
+
+#Create router for external network and mgmt network
+neutron router-show provider-router > /dev/null 2>&1 || neutron router-create --tenant-id $TENANT_ID provider-router
+ROUTER_ID=$(neutron router-show provider-router | grep " id" | awk '{print $4}')
+neutron router-gateway-clear provider-router || true
+neutron router-gateway-set $ROUTER_ID $EXTERNAL_NETWORK_ID
+## make it always ok to have it indempodent.
+neutron router-interface-add $ROUTER_ID $SUBNET_ID || true
+
+openstack router create provider-router
+openstack router set --external-gateway ext_net provider-router
+openstack router add subnet provider-router mgmt_subnet
+
+
+#Configure the default security group to allow ICMP and SSH
+openstack security group rule create --proto icmp default || echo "should have been created already"
+openstack security group rule create --proto tcp --dst-port 22 default || echo "should have been created already"
+openstack security group rule create --proto tcp --dst-port 80 default || echo "should have been created already"
+openstack security group rule create --proto tcp --dst-port 443 default || echo "should have been created already"
+#port for RDP
+openstack security group rule create --proto tcp --dst-port 3389 default || echo "should have been created already"
+
+
+##make wide open
+openstack security group rule create --proto tcp --dst-port 1:65535  --ingress default || echo "should have been created already"
+openstack security group rule create --proto udp --dst-port 1:65535  --ingress default || echo "should have been created already"
+openstack security group rule create --proto tcp --dst-port 1:65535  --egress default || echo "should have been created already"
+openstack security group rule create --proto udp --dst-port 1:65535  --egress default || echo "should have been created already"
+
+
+#Remove the m1.tiny as it is too small for Ubuntu.
+for flavor in m1.tiny m1.small m1.medium m1.large m1.xlarge
+do
+openstack  flavor delete $flavor || true
+done
+openstack flavor create m1.small --id auto --ram 1024 --disk 20 --vcpus 1
+openstack flavor create m1.medium --id auto --ram 2048 --disk 20 --vcpus 2
+openstack flavor create m1.large --id auto --ram 4096 --disk 20 --vcpus 4
+
+#Modify quotas for the tenant to allow large deployments
+openstack quota  set --ram 204800 --cores 200 --instances 100 admin
+neutron quota-update --security-group 100 --security-group-rule 500
+
+
+
+echo "Uploading images to glance"
+
+#Upload images to glance
+folder=$HOME/cloud-images
+
+wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  $folder/trusty-server-cloudimg-amd64-disk1.img
+openstack image show  "Centos 7 x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Centos 7 x86_64"  --file  $folder/CentOS-7-x86_64-GenericCloud.qcow2
+openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Cirros 0.3.4"  --file  $folder/cirros-0.3.4-x86_64-disk.img
+
+
+(Note: When doing forwarding of ports, include 6082 for vnc)
 #===========================
 #Networking SFC commands
 #===========================
 
-neutron net-create netM --provider:network_type vxlan
+neutron net-create netM --provider:network_type vxlan --disable-port-security
 neutron subnet-create --name netM_subnet netM 192.168.7.0/24
+#--no-dhcp
 
-#image creation
+openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
+#openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
 
-neutron port-create --name p1M netM
-neutron port-create --name p2M netM
-neutron port-create --name p3M netM
-neutron port-create --name p4M netM
-neutron port-create --name p5M netM
-neutron port-create --name p6M netM
 
-p1Mid=$(neutron port-list|grep p1M|awk  '{print $2}')
-p2Mid=$(neutron port-list|grep p2M|awk  '{print $2}')
-p3Mid=$(neutron port-list|grep p3M|awk  '{print $2}')
-p4Mid=$(neutron port-list|grep p4M|awk  '{print $2}')
-p5Mid=$(neutron port-list|grep p5M|awk  '{print $2}')
-p6Mid=$(neutron port-list|grep p6M|awk  '{print $2}')
+floatIp1="10.10.11.40"
+floatIp2="10.10.11.41"
+floatIp3="10.10.11.42"
+floatIp4="10.10.11.43"
 
+openstack floating ip create --floating-ip-address $floatIp1 ext_net
+openstack floating ip create --floating-ip-address $floatIp2 ext_net
+openstack floating ip create --floating-ip-address $floatIp3 ext_net
+openstack floating ip create --floating-ip-address $floatIp4 ext_net
+
+openstack port create --disable-port-security --no-security-group --network netM p1M
+openstack port create --disable-port-security --no-security-group --network netM p2M
+openstack port create --disable-port-security --no-security-group --network netM p3M
+openstack port create --disable-port-security --no-security-group --network netM p4M
+openstack port create --disable-port-security --no-security-group --network netM p5M
+openstack port create --disable-port-security --no-security-group --network netM p6M
+
+#neutron port-create --name p1M --port_security_enabled=False --no-security-groups netM
+#neutron port-create --name p2M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
+#neutron port-create --name p3M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
+#neutron port-create --name p4M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
+#neutron port-create --name p5M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
+#neutron port-create --name p6M --port_security_enabled=False --no-security-groups netM
+
+neutron port-list >port-list
+
+p1Mid=$(cat port-list|grep p1M|awk  '{print $2}')
+p2Mid=$(cat port-list|grep p2M|awk  '{print $2}')
+p3Mid=$(cat port-list|grep p3M|awk  '{print $2}')
+p4Mid=$(cat port-list|grep p4M|awk  '{print $2}')
+p5Mid=$(cat port-list|grep p5M|awk  '{print $2}')
+p6Mid=$(cat port-list|grep p6M|awk  '{print $2}')
+
+p1Mip=$(cat port-list|grep p1M|awk '{print $11}'|cut -d "\"" -f2)
+p2Mip=$(cat port-list|grep p2M|awk '{print $11}'|cut -d "\"" -f2)
+p3Mip=$(cat port-list|grep p3M|awk '{print $11}'|cut -d "\"" -f2)
+p4Mip=$(cat port-list|grep p4M|awk '{print $11}'|cut -d "\"" -f2)
+p5Mip=$(cat port-list|grep p5M|awk '{print $11}'|cut -d "\"" -f2)
+p6Mip=$(cat port-list|grep p6M|awk '{print $11}'|cut -d "\"" -f2)
+
+#p1Mip=$(openstack port show $p1Mid |grep ip_address=|cut -d"'" -f2)
+#p2Mip=$(openstack port show $p2Mid |grep ip_address=|cut -d"'" -f2)
+#p3Mip=$(openstack port show $p3Mid |grep ip_address=|cut -d"'" -f2)
+#p4Mip=$(openstack port show $p4Mid |grep ip_address=|cut -d"'" -f2)
+#p5Mip=$(openstack port show $p5Mid |grep ip_address=|cut -d"'" -f2)
+#p6Mip=$(openstack port show $p6Mid |grep ip_address=|cut -d"'" -f2)
 
 openstack keypair create  t1 >t1.pem
+chmod 600 t1.pem
 
 openstack flavor create --ram 512 --disk 8 --vcpus 1 m1.smaller
 openstack flavor create --ram 512 --disk 1 --vcpus 1 m1.tiny
+openstack flavor create --ram 1024 --disk 3 --vcpus 1 --ephemeral 5 m1.fortigate
 
-nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p1Mid --nic port-id=$p2Mid --key-name t1 vm1M
-nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p3Mid --nic port-id=$p4Mid --key-name t1 vm2M
-nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p5Mid --nic port-id=$p6Mid --key-name t1 vm3M
+cat > myConfig1.txt <<EOF
+config system interface
+  edit "port1"
+    set mode dhcp
+    set allowaccess https ping ssh http
+    set mtu-override enable
+    set mtu 1300
+  next
+  edit "port2"
+      set mtu-override enable
+      set mtu 1300
+  next
+  edit "port3"
+      set mtu-override enable
+      set mtu 1300
+  next
+  end
+config system virtual-wire-pair
+    edit "vwp1"
+        set member "port2" "port3"
+    next
+end
+config firewall policy
+  edit 1
+    set name "vwp1-policy"
+    set srcintf "port2" "port3"
+    set dstintf "port2" "port3"
+    set srcaddr "all"
+    set dstaddr "all"
+    set action accept
+    set schedule "always"
+    set service "ALL"
+    set logtraffic all
+    set logtraffic-start enable
+    set capture-packet enable
+  next
+end
+EOF
+
+cat > myConfig2.txt <<EOF
+config system interface
+  edit "port1"
+    set mode dhcp
+    set allowaccess https ping ssh http
+    set mtu-override enable
+    set mtu 1300
+  next
+  edit "port2"
+      set mtu-override enable
+      set mtu 1300
+  next
+  edit "port3"
+      set mtu-override enable
+      set mtu 1300
+  next
+end
+config system virtual-wire-pair
+  edit "vwp1"
+    set member "port2" "port3"
+  next
+end
+config firewall policy
+  edit 1
+    set name "vwp1-policy"
+    set srcintf "port2" "port3"
+    set dstintf "port2" "port3"
+    set srcaddr "all"
+    set dstaddr "all"
+    set action accept
+    set schedule "always"
+    set service "ALL"
+    set logtraffic all
+    set logtraffic-start enable
+    set capture-packet enable
+  next
+end
+EOF
+
+nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p1Mid --key-name t1 vm1M
+#nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --key-name t1 vm2M
+nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --config-drive true --user-data myConfig1.txt --ephemeral size=5 vm2M
+#nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p4Mid --nic port-id=$p5Mid --key-name t1 vm3M
+nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic port-id=$p4Mid --nic port-id=$p5Mid --config-drive true --user-data myConfig2.txt --ephemeral size=5 vm3M
+nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p6Mid --key-name t1 vm4M
+
+openstack server add floating ip vm1M $floatIp1
+openstack server add floating ip vm2M $floatIp2
+openstack server add floating ip vm3M $floatIp3
+openstack server add floating ip vm4M $floatIp4
+
+#nova floating-ip-associate vm1M $floatIp1
+#nova floating-ip-associate vm2M $floatIp2
+#nova floating-ip-associate vm3M $floatIp3
+#nova floating-ip-associate vm4M $floatIp4
 
 
-neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix 192.168.7.13/32  --destination-ip-prefix 192.168.7.15/32  --protocol tcp  --source-port 23:65535  --destination-port 80:80 --logical-source-port p2M --logical-destination-port p5M fc1M 
 
-neutron port-pair-create --ingress=p1M --egress=p2M pp1M
-neutron port-pair-create --ingress=p3M --egress=p4M pp2M
-neutron port-pair-create --ingress=p5M --egress=p6M pp3M
+#neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol tcp  --source-port 23:65535  --destination-port 80:80 --logical-source-port p1M fc1M
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol tcp  --logical-source-port p1M fc1M
 
-neutron port-pair-group-create --port-pair pp1M --port-pair pp2M pg1M
-neutron port-pair-group-create --port-pair pp3M pg2M
+neutron port-pair-create --ingress=p2M --egress=p3M pp1M
+neutron port-pair-create --ingress=p4M --egress=p5M pp2M
+
+neutron port-pair-group-create --port-pair pp1M pg1M
+neutron port-pair-group-create --port-pair pp2M pg2M
 
 neutron port-chain-create --port-pair-group pg1M --port-pair-group pg2M --flow-classifier fc1M pc1M
 
+ssh -i t1.pem ubuntu@$floatIp1
+ssh -i t1.pem ubuntu@$floatIp2
+ssh -i t1.pem ubuntu@$floatIp3
+ssh -i t1.pem ubuntu@$floatIp4
 
+sudo dhclient
 
 --- Status ---
 
@@ -279,24 +555,34 @@ neutron subnet-list
 neutron net-list
 
 nova list
+nova show vm1M
+nova show vm2M
+nova show vm3M
+nova show vm4M
 
 neutron flow-classifier-list
 neutron port-pair-list
 neutron port-pair-group-list
 neutron port-chain-list
+neutron port-list
+
+openstack floating ip list
+
+glance image-list
 
 --- Delete ---
+
 neutron port-chain-delete pc1M
 
 neutron port-pair-group-delete pg2M
 neutron port-pair-group-delete pg1M
 
-neutron port-pair-delete pp3M
 neutron port-pair-delete pp2M
 neutron port-pair-delete pp1M
 
 neutron flow-classifier-delete fc1M
 
+nova delete vm4M
 nova delete vm3M
 nova delete vm2M
 nova delete vm1M
@@ -307,6 +593,35 @@ neutron port-delete p4M
 neutron port-delete p3M
 neutron port-delete p2M
 neutron port-delete p1M
+
+neutron subnet-delete netM_subnet
+neutron net-delete netM 
+
+openstack flavor delete m1.tiny
+openstack flavor delete m1.smaller
+
+openstack floating ip delete $floatIp1
+openstack floating ip delete $floatIp2
+openstack floating ip delete $floatIp3
+openstack floating ip delete $floatIp4
+
+openstack keypair delete  t1
+
+glance image-delete $(glance image-list|grep FortiGate|awk '{print $2}')
+
+openstack flavor delete m1.fortigate
+
+rm t1.pem
+rm myConfig1.txt
+rm myConfig2.txt
+
+ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp1
+ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp2
+ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp3
+ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp4
+
+
+
 
 --- Scratch ---
 

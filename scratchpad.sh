@@ -372,30 +372,63 @@ openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create 
 #Networking SFC commands
 #===========================
 
-neutron net-create netM --provider:network_type vxlan --disable-port-security
-neutron subnet-create --name netM_subnet netM 192.168.7.0/24
-#--no-dhcp
 
-openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
-#openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
-
+cat >env.sh <<EOF
 
 floatIp1="10.10.11.40"
 floatIp2="10.10.11.41"
 floatIp3="10.10.11.42"
 floatIp4="10.10.11.43"
 
+neutron port-list >port-list
+
+p1Mid=\$(cat port-list|grep p1M|awk  '{print \$2}')
+p2Mid=\$(cat port-list|grep p2M|awk  '{print \$2}')
+p3Mid=\$(cat port-list|grep p3M|awk  '{print \$2}')
+p4Mid=\$(cat port-list|grep p4M|awk  '{print \$2}')
+p5Mid=\$(cat port-list|grep p5M|awk  '{print \$2}')
+p6Mid=\$(cat port-list|grep p6M|awk  '{print \$2}')
+
+p1Mip=\$(cat port-list|grep p1M|awk '{print \$11}'|cut -d "\"" -f2)
+p2Mip=\$(cat port-list|grep p2M|awk '{print \$11}'|cut -d "\"" -f2)
+p3Mip=\$(cat port-list|grep p3M|awk '{print \$11}'|cut -d "\"" -f2)
+p4Mip=\$(cat port-list|grep p4M|awk '{print \$11}'|cut -d "\"" -f2)
+p5Mip=\$(cat port-list|grep p5M|awk '{print \$11}'|cut -d "\"" -f2)
+p6Mip=\$(cat port-list|grep p6M|awk '{print \$11}'|cut -d "\"" -f2)
+
+#p1Mip=\$(openstack port show \$p1Mid |grep ip_address=|cut -d"'" -f2)
+#p2Mip=\$(openstack port show \$p2Mid |grep ip_address=|cut -d"'" -f2)
+#p3Mip=\$(openstack port show \$p3Mid |grep ip_address=|cut -d"'" -f2)
+#p4Mip=\$(openstack port show \$p4Mid |grep ip_address=|cut -d"'" -f2)
+#p5Mip=\$(openstack port show \$p5Mid |grep ip_address=|cut -d"'" -f2)
+#p6Mip=\$(openstack port show \$p6Mid |grep ip_address=|cut -d"'" -f2)
+
+EOF
+
+openstack network create netM --provider-network-type vxlan --disable-port-security
+openstack subnet create --network netM --subnet-range 192.168.7.0/24 netM_subnet
+
+openstack network create netServerM --provider-network-type vxlan --disable-port-security
+openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netServerM_subnet
+
+#--no-dhcp
+
+openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
+#openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
+
+. env.sh
 openstack floating ip create --floating-ip-address $floatIp1 ext_net
 openstack floating ip create --floating-ip-address $floatIp2 ext_net
 openstack floating ip create --floating-ip-address $floatIp3 ext_net
 openstack floating ip create --floating-ip-address $floatIp4 ext_net
 
-openstack port create --disable-port-security --no-security-group --network netM p1M
-openstack port create --disable-port-security --no-security-group --network netM p2M
-openstack port create --disable-port-security --no-security-group --network netM p3M
-openstack port create --disable-port-security --no-security-group --network netM p4M
-openstack port create --disable-port-security --no-security-group --network netM p5M
-openstack port create --disable-port-security --no-security-group --network netM p6M
+openstack port create --network netM p1M
+openstack port create --network netM p2M
+openstack port create --network netM p3M
+openstack port create --network netM p4M
+openstack port create --network netServerM p5M
+openstack port create --network netServerM p6M
+. env.sh
 
 #neutron port-create --name p1M --port_security_enabled=False --no-security-groups netM
 #neutron port-create --name p2M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
@@ -403,29 +436,7 @@ openstack port create --disable-port-security --no-security-group --network netM
 #neutron port-create --name p4M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
 #neutron port-create --name p5M --port_security_enabled=False --no-allowed-address-pairs --no-security-groups netM
 #neutron port-create --name p6M --port_security_enabled=False --no-security-groups netM
-
-neutron port-list >port-list
-
-p1Mid=$(cat port-list|grep p1M|awk  '{print $2}')
-p2Mid=$(cat port-list|grep p2M|awk  '{print $2}')
-p3Mid=$(cat port-list|grep p3M|awk  '{print $2}')
-p4Mid=$(cat port-list|grep p4M|awk  '{print $2}')
-p5Mid=$(cat port-list|grep p5M|awk  '{print $2}')
-p6Mid=$(cat port-list|grep p6M|awk  '{print $2}')
-
-p1Mip=$(cat port-list|grep p1M|awk '{print $11}'|cut -d "\"" -f2)
-p2Mip=$(cat port-list|grep p2M|awk '{print $11}'|cut -d "\"" -f2)
-p3Mip=$(cat port-list|grep p3M|awk '{print $11}'|cut -d "\"" -f2)
-p4Mip=$(cat port-list|grep p4M|awk '{print $11}'|cut -d "\"" -f2)
-p5Mip=$(cat port-list|grep p5M|awk '{print $11}'|cut -d "\"" -f2)
-p6Mip=$(cat port-list|grep p6M|awk '{print $11}'|cut -d "\"" -f2)
-
-#p1Mip=$(openstack port show $p1Mid |grep ip_address=|cut -d"'" -f2)
-#p2Mip=$(openstack port show $p2Mid |grep ip_address=|cut -d"'" -f2)
-#p3Mip=$(openstack port show $p3Mid |grep ip_address=|cut -d"'" -f2)
-#p4Mip=$(openstack port show $p4Mid |grep ip_address=|cut -d"'" -f2)
-#p5Mip=$(openstack port show $p5Mid |grep ip_address=|cut -d"'" -f2)
-#p6Mip=$(openstack port show $p6Mid |grep ip_address=|cut -d"'" -f2)
+#. env.sh
 
 openstack keypair create  t1 >t1.pem
 chmod 600 t1.pem
@@ -450,27 +461,40 @@ config system interface
       set mtu-override enable
       set mtu 1300
   next
-  end
-config system virtual-wire-pair
-    edit "vwp1"
-        set member "port2" "port3"
-    next
 end
-config firewall policy
-  edit 1
-    set name "vwp1-policy"
-    set srcintf "port2" "port3"
-    set dstintf "port2" "port3"
-    set srcaddr "all"
-    set dstaddr "all"
-    set action accept
-    set schedule "always"
-    set service "ALL"
-    set logtraffic all
-    set logtraffic-start enable
-    set capture-packet enable
-  next
+#config system virtual-wire-pair
+#    edit "vwp1"
+#        set member "port2" "port3"
+#    next
+#end
+#config firewall policy
+#  edit 1
+#    set name "vwp1-policy"
+#    set srcintf "port2" "port3"
+#    set dstintf "port2" "port3"
+#    set srcaddr "all"
+#    set dstaddr "all"
+#    set action accept
+#    set schedule "always"
+#    set service "ALL"
+#    set logtraffic all
+#    set logtraffic-start enable
+#  next
+#end
+config system dns
+  set primary 8.8.8.8
+  set secondary 4.4.4.4
 end
+
+EOF
+
+cat > myLicense1.txt <<EOF
+-----BEGIN FGT VM LICENSE-----
+QAAAAOb1gAZanLrL9DtwE2uco7+HgNar1v7XZACUth+ozcpsBaXhpbtEY+LKdu6B
+rz4yjSjB2ehyK9ptF6v94/9HdH1gAAAAK0wVywB9LLXLfbkyYJZaqXjsSsW8/z+6
+RN7iveOxB9ZdyaXAz1XLRHKOez/bQb/7EesChwc0uePHOXwlhyQvbD0c92tyk5Dp
+lU80JbM2lKQ0GsBsOWsJt6FWRqYV+jQT
+-----END FGT VM LICENSE-----
 EOF
 
 cat > myConfig2.txt <<EOF
@@ -507,17 +531,20 @@ config firewall policy
     set service "ALL"
     set logtraffic all
     set logtraffic-start enable
-    set capture-packet enable
   next
 end
 EOF
 
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p1Mid --key-name t1 vm1M
 #nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --key-name t1 vm2M
-nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --config-drive true --user-data myConfig1.txt --ephemeral size=5 vm2M
+nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --config-drive true --user-data myConfig1.txt --ephemeral size=5 --file license=myLicense1.txt vm2M
 #nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p4Mid --nic port-id=$p5Mid --key-name t1 vm3M
 nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic port-id=$p4Mid --nic port-id=$p5Mid --config-drive true --user-data myConfig2.txt --ephemeral size=5 vm3M
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$p6Mid --key-name t1 vm4M
+
+
+nova boot --flavor m1.smaller --image "Trusty x86_64"  --nic net-name=mgmt --nic port-id=$p2Mid --nic port-id=$p3Mid --key-name t1 vm2M
+nova boot --flavor m1.smaller --image "Trusty x86_64"  --nic net-name=mgmt --nic port-id=$p4Mid --nic port-id=$p5Mid --key-name t1 vm3M
 
 openstack server add floating ip vm1M $floatIp1
 openstack server add floating ip vm2M $floatIp2
@@ -533,6 +560,9 @@ openstack server add floating ip vm4M $floatIp4
 
 #neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol tcp  --source-port 23:65535  --destination-port 80:80 --logical-source-port p1M fc1M
 neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol tcp  --logical-source-port p1M fc1M
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol udp  --logical-source-port p1M fc2M
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix $p1Mip/24  --destination-ip-prefix $p6Mip/24  --protocol icmp  --logical-source-port p1M fc3M
+
 
 neutron port-pair-create --ingress=p2M --egress=p3M pp1M
 neutron port-pair-create --ingress=p4M --egress=p5M pp2M
@@ -540,14 +570,24 @@ neutron port-pair-create --ingress=p4M --egress=p5M pp2M
 neutron port-pair-group-create --port-pair pp1M pg1M
 neutron port-pair-group-create --port-pair pp2M pg2M
 
-neutron port-chain-create --port-pair-group pg1M --port-pair-group pg2M --flow-classifier fc1M pc1M
+neutron port-chain-create --port-pair-group pg1M --port-pair-group pg2M --flow-classifier fc1M --flow-classifier fc2M --flow-classifier fc3M pc1M
 
 ssh -i t1.pem ubuntu@$floatIp1
 ssh -i t1.pem ubuntu@$floatIp2
 ssh -i t1.pem ubuntu@$floatIp3
 ssh -i t1.pem ubuntu@$floatIp4
 
-sudo dhclient
+ifconfig; sudo dhclient; ifconfig
+
+#In VM2 and VM3
+sudo apt install -y python3-pip
+sudo pip3 install hexdump
+wget https://raw.githubusercontent.com/fortinet-solutions-cse/sfc-proxy/simple_replier/simple_replier.py
+sudo python3 simple_replier.py -a eth1 -b eth2
+
+#Arp entry to avoid arp loops
+ssh -i t1.pem ubuntu@10.10.11.40 "sudo arp -i eth1 -s $p6Mip $(grep p6M port-list|awk '{print $6}')"
+
 
 --- Status ---
 
@@ -581,6 +621,8 @@ neutron port-pair-delete pp2M
 neutron port-pair-delete pp1M
 
 neutron flow-classifier-delete fc1M
+neutron flow-classifier-delete fc2M
+neutron flow-classifier-delete fc3M
 
 nova delete vm4M
 nova delete vm3M

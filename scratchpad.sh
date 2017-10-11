@@ -368,12 +368,17 @@ openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create 
 
 
 (Note: When doing forwarding of ports, include 6082 for vnc)
+
+
+
 #===========================
 #Networking SFC commands
 #===========================
 
 
 cat >env.sh <<EOF
+
+source ~/nova.rc
 
 floatIp1="10.10.11.40"
 floatIp2="10.10.11.41"
@@ -409,7 +414,7 @@ openstack network create netM --provider-network-type vxlan --disable-port-secur
 openstack subnet create --network netM --subnet-range 192.168.7.0/24 netM_subnet
 
 openstack network create netServerM --provider-network-type vxlan --disable-port-security
-openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netServerM_subnet
+openstack subnet create --network netServerM --subnet-range 192.168.30.0/24 netServerM_subnet
 
 #--no-dhcp
 
@@ -462,25 +467,25 @@ config system interface
       set mtu 1300
   next
 end
-#config system virtual-wire-pair
-#    edit "vwp1"
-#        set member "port2" "port3"
-#    next
-#end
-#config firewall policy
-#  edit 1
-#    set name "vwp1-policy"
-#    set srcintf "port2" "port3"
-#    set dstintf "port2" "port3"
-#    set srcaddr "all"
-#    set dstaddr "all"
-#    set action accept
-#    set schedule "always"
-#    set service "ALL"
-#    set logtraffic all
-#    set logtraffic-start enable
-#  next
-#end
+config system virtual-wire-pair
+    edit "vwp1"
+        set member "port2" "port3"
+    next
+end
+config firewall policy
+  edit 1
+    set name "vwp1-policy"
+    set srcintf "port2" "port3"
+    set dstintf "port2" "port3"
+    set srcaddr "all"
+    set dstaddr "all"
+    set action accept
+    set schedule "always"
+    set service "ALL"
+    set logtraffic all
+    set logtraffic-start enable
+  next
+end
 config system dns
   set primary 8.8.8.8
   set secondary 4.4.4.4
@@ -587,9 +592,15 @@ sudo python3 simple_replier.py -a eth1 -b eth2
 
 #Arp entry to avoid arp loops
 ssh -i t1.pem ubuntu@10.10.11.40 "sudo arp -i eth1 -s $p6Mip $(grep p6M port-list|awk '{print $6}')"
+ssh -i t1.pem ubuntu@10.10.11.43 "sudo arp -i eth1 -s $p1Mip $(grep p1M port-list|awk '{print $6}')"
+
+ssh -i t1.pem ubuntu@10.10.11.40 "sudo ip route add $p6Mip/24 dev eth1 proto kernel scope link src $p1Mip"
 
 
---- Status ---
+#===========================
+# Status
+#===========================
+
 
 neutron subnet-list
 neutron net-list
@@ -608,9 +619,13 @@ neutron port-list
 
 openstack floating ip list
 
+openstack flavor list
+
 glance image-list
 
---- Delete ---
+#===========================
+# Deletion
+#===========================
 
 neutron port-chain-delete pc1M
 
@@ -636,8 +651,10 @@ neutron port-delete p3M
 neutron port-delete p2M
 neutron port-delete p1M
 
-neutron subnet-delete netM_subnet
-neutron net-delete netM 
+openstack subnet delete netM_subnet
+openstack network delete netM
+openstack subnet delete netServerM_subnet
+openstack network delete netServerM
 
 openstack flavor delete m1.tiny
 openstack flavor delete m1.smaller

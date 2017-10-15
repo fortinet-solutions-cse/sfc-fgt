@@ -19,3 +19,5 @@ juju ssh nova-compute/1 sudo sed -i.old \"s/\\[agent\\]/\\[agent\\]\\nextensions
 juju ssh nova-compute/1 sudo systemctl restart neutron-openvswitch-agent
 
 juju ssh neutron-api/0 sudo neutron-db-manage --subproject networking-sfc upgrade head
+
+sudo pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/newton networking-sfc==3.0.0 python-neutronclient

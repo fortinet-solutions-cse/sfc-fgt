@@ -682,9 +682,13 @@ ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp4
 
 
 
---- Scratch ---
+--- Miscellaneous ---
 
 nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name t1 testVM
 nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
+
+
+rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/* fortinet@10.210.9.3:/home/fortinet
+rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.3:/home/fortinet
 
 

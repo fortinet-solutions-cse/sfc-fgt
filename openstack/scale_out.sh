@@ -75,7 +75,7 @@ openstack subnet create --network net_${VM_NAME}_2 --subnet-range 10.1.1.0/24 ne
 
 #Create ports of the proxy that will be part of the chain
 openstack port create --network netM p_A_proxy_$VM_NAME
-openstack port create --network netServerM p_B_proxy_$VM_NAME
+openstack port create --network netM p_B_proxy_$VM_NAME
 . env_${VM_NAME}.sh
 
 #Create floating ips for management of proxy and FGT

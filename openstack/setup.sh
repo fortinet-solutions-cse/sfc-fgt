@@ -32,9 +32,6 @@ EOF
 openstack network create netM --provider-network-type vxlan --disable-port-security
 openstack subnet create --network netM --subnet-range 192.168.7.0/24 netM_subnet
 
-openstack network create netServerM --provider-network-type vxlan --disable-port-security
-openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netServerM_subnet
-
 openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
 qemu-img convert fortios.qcow2 fortios.raw
 openstack image create --file fortios.raw --public "FortiGate_Raw" --disk-format qcow2 --container-format bare
@@ -52,8 +49,8 @@ openstack keypair create  t1 >t1.pem
 chmod 600 t1.pem
 
 openstack port create --network netM pClientM
+openstack port create --network netM pServerM
 #openstack port create --network netM pClientDummyM
-openstack port create --network netServerM pServerM
 #openstack port create --network netServerM pServerDummyM
 . env.sh
 

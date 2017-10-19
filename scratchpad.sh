@@ -313,12 +313,12 @@ openstack subnet create --network mgmt \
 
 
 #Create router for external network and mgmt network
-neutron router-show provider-router > /dev/null 2>&1 || neutron router-create --tenant-id $TENANT_ID provider-router
-ROUTER_ID=$(neutron router-show provider-router | grep " id" | awk '{print $4}')
-neutron router-gateway-clear provider-router || true
-neutron router-gateway-set $ROUTER_ID $EXTERNAL_NETWORK_ID
+#neutron router-show provider-router > /dev/null 2>&1 || neutron router-create --tenant-id $TENANT_ID provider-router
+#ROUTER_ID=$(neutron router-show provider-router | grep " id" | awk '{print $4}')
+#neutron router-gateway-clear provider-router || true
+#neutron router-gateway-set $ROUTER_ID $EXTERNAL_NETWORK_ID
 ## make it always ok to have it indempodent.
-neutron router-interface-add $ROUTER_ID $SUBNET_ID || true
+#neutron router-interface-add $ROUTER_ID $SUBNET_ID || true
 
 openstack router create provider-router
 openstack router set --external-gateway ext_net provider-router
@@ -359,10 +359,9 @@ neutron quota-update --security-group 100 --security-group-rule 500
 echo "Uploading images to glance"
 
 #Upload images to glance
-folder=$HOME/cloud-images
 
 wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
-openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  $folder/trusty-server-cloudimg-amd64-disk1.img
+openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
 openstack image show  "Centos 7 x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Centos 7 x86_64"  --file  $folder/CentOS-7-x86_64-GenericCloud.qcow2
 openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Cirros 0.3.4"  --file  $folder/cirros-0.3.4-x86_64-disk.img
 
@@ -688,7 +687,8 @@ nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name
 nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
 
 
-rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/* fortinet@10.210.9.3:/home/fortinet
-rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.3:/home/fortinet
+rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/* fortinet@10.210.9.103:/home/fortinet
+rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.103:/home/fortinet
+
 
 

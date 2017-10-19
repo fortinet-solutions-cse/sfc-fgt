@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x -e
+set -x
 
 . ~/nova.rc
 
@@ -17,14 +17,8 @@ neutron port-list >port-list
 pClientMid=\$(cat port-list|grep pClientM|awk  '{print \$2}')
 pClientMip=\$(cat port-list|grep pClientM|awk '{print \$13}'|cut -d "\"" -f2)
 
-#pClientDummyMid=\$(cat port-list|grep pClientDummyM|awk  '{print \$2}')
-#pClientDummyMip=\$(cat port-list|grep pClientDummyM|awk '{print \$13}'|cut -d "\"" -f2)
-
 pServerMid=\$(cat port-list|grep pServerM|awk  '{print \$2}')
 pServerMip=\$(cat port-list|grep pServerM|awk '{print \$13}'|cut -d "\"" -f2)
-
-#pServerDummyMid=\$(cat port-list|grep pServerDummyM|awk  '{print \$2}')
-#pServerDummyMip=\$(cat port-list|grep pServerDummyM|awk '{print \$13}'|cut -d "\"" -f2)
 
 EOF
 
@@ -52,9 +46,7 @@ openstack keypair create  t1 >t1.pem
 chmod 600 t1.pem
 
 openstack port create --network netM pClientM
-#openstack port create --network netM pClientDummyM
 openstack port create --network netServerM pServerM
-#openstack port create --network netServerM pServerDummyM
 . env.sh
 
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$pClientMid --key-name t1 vmClientM
@@ -82,9 +74,9 @@ done
 retries=40
 while [ $retries -gt 0 ]
 do
-  ssh -i t1.pem ubuntu@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig"
+  ssh -i t1.pem ubuntu@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result1=$?
-  ssh -i t1.pem ubuntu@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig"
+  ssh -i t1.pem ubuntu@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result2=$?
   if [ $result1 -eq 0 ] && [ $result2 -eq 0 ] ; then
      break
@@ -102,7 +94,6 @@ ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pCli
 ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -an"
 ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -an"
 
-#ssh -i t1.pem ubuntu@$floatIpClient "sudo ip route add $pServerMip/24 dev eth1 proto kernel scope link src $pClientMip"
 ssh -i t1.pem ubuntu@$floatIpClient "sudo ip r"
 
 

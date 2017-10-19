@@ -63,6 +63,8 @@ openstack network delete net_${VM_NAME}_2
 
 rm -f myConfig_${VM_NAME}.txt
 rm -f env_${VM_NAME}
+ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_1}
+ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_2}
 EOF
 
 chmod 755 scale_in_${VM_NAME}.sh
@@ -155,9 +157,10 @@ do
 done
 
 
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_1}
 ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_2}
+
+alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 retries=100
 while [ $retries -gt 0 ]
@@ -201,8 +204,6 @@ sudo ifconfig eth1 mtu 4096; \
 sudo ifconfig eth2 mtu 4096; \
 sudo ifconfig eth3 mtu 4096; \
 sudo ifconfig eth4 mtu 4096"
-
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 ssh -i t1.pem ubuntu@${!floating_ip_proxy} $command
 

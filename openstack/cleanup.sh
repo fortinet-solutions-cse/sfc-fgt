@@ -9,6 +9,10 @@ ssh-keygen -f ~/.ssh/known_hosts -R $floatIpServer
 
 openstack server list|egrep -e '(vmClientM|vmServerM)'| awk '{print $2}'| xargs -I[] openstack server delete []
 
+
+neutron port-pair-group-delete pgClientM pgServerM
+neutron port-pair-delete ppClientM ppServerM
+
 openstack port delete pServerDummyM pClientDummyM pServerM pClientM
 
 rm t1.pem

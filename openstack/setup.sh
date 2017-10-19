@@ -15,16 +15,16 @@ floatIpServer="10.10.11.41"
 neutron port-list >port-list
 
 pClientMid=\$(cat port-list|grep pClientM|awk  '{print \$2}')
-pClientMip=\$(cat port-list|grep pClientM|awk '{print \$11}'|cut -d "\"" -f2)
+pClientMip=\$(cat port-list|grep pClientM|awk '{print \$13}'|cut -d "\"" -f2)
 
 #pClientDummyMid=\$(cat port-list|grep pClientDummyM|awk  '{print \$2}')
-#pClientDummyMip=\$(cat port-list|grep pClientDummyM|awk '{print \$11}'|cut -d "\"" -f2)
+#pClientDummyMip=\$(cat port-list|grep pClientDummyM|awk '{print \$13}'|cut -d "\"" -f2)
 
 pServerMid=\$(cat port-list|grep pServerM|awk  '{print \$2}')
-pServerMip=\$(cat port-list|grep pServerM|awk '{print \$11}'|cut -d "\"" -f2)
+pServerMip=\$(cat port-list|grep pServerM|awk '{print \$13}'|cut -d "\"" -f2)
 
 #pServerDummyMid=\$(cat port-list|grep pServerDummyM|awk  '{print \$2}')
-#pServerDummyMip=\$(cat port-list|grep pServerDummyM|awk '{print \$11}'|cut -d "\"" -f2)
+#pServerDummyMip=\$(cat port-list|grep pServerDummyM|awk '{print \$13}'|cut -d "\"" -f2)
 
 EOF
 
@@ -36,6 +36,8 @@ openstack network create netServerM --provider-network-type vxlan --disable-port
 openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netServerM_subnet
 
 openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
+qemu-img convert fortios.qcow2 fortios.raw
+openstack image create --file fortios.raw --public "FortiGate_Raw" --disk-format qcow2 --container-format bare
 
 openstack flavor create --ram 512 --disk 8 --vcpus 1 m1.smaller
 openstack flavor create --ram 512 --disk 1 --vcpus 1 m1.tiny
@@ -58,10 +60,24 @@ openstack port create --network netServerM pServerM
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$pClientMid --key-name t1 vmClientM
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$pServerMid --key-name t1 vmServerM
 
-openstack server add floating ip vmClientM $floatIpClient
-openstack server add floating ip vmServerM $floatIpServer
 
 alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+retries=40
+while [ $retries -gt 0 ]
+do
+  openstack server add floating ip vmClientM $floatIpClient && \
+  openstack server add floating ip vmServerM $floatIpServer
+  result=$?
+  if [ $result -eq 0 ] ; then
+     break
+  elif [ $retries -eq 1 ] ; then
+     echo "Servers not ready. Aborting..."
+     exit -1
+  fi
+  sleep 1
+  retries=$((retries-1))
+done
 
 retries=40
 while [ $retries -gt 0 ]
@@ -80,8 +96,8 @@ do
   retries=$((retries-1))
 done
 
-ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -i eth1 -s $pServerMip $(grep pServerM port-list|awk '{print $6}')"
-ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pClientM port-list|awk '{print $6}')"
+ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -i eth1 -s $pServerMip $(grep pServerM port-list|awk '{print $8}')"
+ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pClientM port-list|awk '{print $8}')"
 
 ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -an"
 ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -an"

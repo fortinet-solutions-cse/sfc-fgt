@@ -1,11 +1,17 @@
 #!/bin/bash
 
+set -x
+
 if [ -z "$1" ]; then
   echo "Need name of the VM to SCALE"
   exit -1
 fi
 
-VM_NAME="ONE"
+VM_NAME=$1
+F_IP_1="10.10.11.42"
+F_IP_2="10.10.11.43"
+
+. env.sh
 
 cat >env_${VM_NAME}.sh <<EOF
 
@@ -13,18 +19,53 @@ source ~/nova.rc
 
 VM_NAME=${VM_NAME}
 
-floatIp_${VM_NAME}_proxy="10.10.11.42"
-floatIp_${VM_NAME}_fgt="10.10.11.43"
+floatIp_${VM_NAME}_proxy=${F_IP_1}
+floatIp_${VM_NAME}_fgt=${F_IP_2}
 
 neutron port-list >port-list
 
 p_A_proxy_${VM_NAME}_id=\$(cat port-list|grep p_A_proxy_$VM_NAME|awk '{print \$2}')
-p_A_proxy_${VM_NAME}_ip=\$(cat port-list|grep p_A_proxy_$VM_NAME|awk '{print \$11}'|cut -d "\"" -f2)
+p_A_proxy_${VM_NAME}_ip=\$(cat port-list|grep p_A_proxy_$VM_NAME|awk '{print \$13}'|cut -d "\"" -f2)
 
 p_B_proxy_${VM_NAME}_id=\$(cat port-list|grep p_B_proxy_$VM_NAME|awk '{print \$2}')
-p_B_proxy_${VM_NAME}_ip=\$(cat port-list|grep p_B_proxy_$VM_NAME|awk '{print \$11}'|cut -d "\"" -f2)
+p_B_proxy_${VM_NAME}_ip=\$(cat port-list|grep p_B_proxy_$VM_NAME|awk '{print \$13}'|cut -d "\"" -f2)
 
 EOF
+
+cat >scale_in_${VM_NAME}.sh <<EOF
+set -x
+source ~/nova.rc
+
+VM_NAME=${VM_NAME}
+
+floatIp_${VM_NAME}_proxy=${F_IP_1}
+floatIp_${VM_NAME}_fgt=${F_IP_2}
+
+neutron port-chain-delete pc_${VM_NAME}
+neutron flow-classifier-delete fc3_${VM_NAME}
+neutron flow-classifier-delete fc2_${VM_NAME}
+neutron flow-classifier-delete fc1_${VM_NAME}
+
+neutron port-pair-group-delete pg_${VM_NAME}
+neutron port-pair-delete pp_${VM_NAME}
+
+openstack server delete fgt_${VM_NAME}
+openstack server delete proxy_${VM_NAME}
+
+openstack floating ip delete ${F_IP_2}
+openstack floating ip delete ${F_IP_1}
+
+openstack port delete p_B_proxy_$VM_NAME
+openstack port delete p_A_proxy_$VM_NAME
+
+openstack network delete net_${VM_NAME}_1
+openstack network delete net_${VM_NAME}_2
+
+rm -f myConfig_${VM_NAME}.txt
+rm -f env_${VM_NAME}
+EOF
+
+chmod 755 scale_in_${VM_NAME}.sh
 
 #Create networks to communicate proxy with FGT
 openstack network create net_${VM_NAME}_1 --provider-network-type vxlan --disable-port-security
@@ -37,23 +78,17 @@ openstack port create --network netM p_A_proxy_$VM_NAME
 openstack port create --network netServerM p_B_proxy_$VM_NAME
 . env_${VM_NAME}.sh
 
-
 #Create floating ips for management of proxy and FGT
 floating_ip_proxy=floatIp_${VM_NAME}_proxy
 floating_ip_fgt=floatIp_${VM_NAME}_fgt
 openstack floating ip create --floating-ip-address ${!floating_ip_proxy} ext_net
 openstack floating ip create --floating-ip-address ${!floating_ip_fgt} ext_net
 
-
-
-
 #Boot Proxy and FGT VMs
 p_A_id=p_A_proxy_${VM_NAME}_id
 p_B_id=p_B_proxy_${VM_NAME}_id
 net_1=net_${VM_NAME}_1
 net_2=net_${VM_NAME}_2
-
-
 
 cat > myConfig_${VM_NAME}.txt <<EOF
 config system interface
@@ -100,14 +135,31 @@ EOF
 
 
 nova boot --flavor m1.smaller --image "Trusty x86_64"  --nic net-name=mgmt --nic port-id=${!p_A_id} --nic port-id=${!p_B_id} --nic net-name=${net_1} --nic net-name=${net_2} --key-name t1 proxy_${VM_NAME}
-nova boot --flavor m1.fortigate --image "FortiGate" --nic net-name=mgmt --nic net-name=${net_1} --nic net-name=${net_2} --config-drive true --user-data myConfig_${VM_NAME}.txt --ephemeral size=5 fgt_${VM_NAME}
+nova boot --flavor m1.fortigate --image "FortiGate_Raw" --nic net-name=mgmt --nic net-name=${net_1} --nic net-name=${net_2} --config-drive true --user-data myConfig_${VM_NAME}.txt --ephemeral size=5 fgt_${VM_NAME}
 
-openstack server add floating ip proxy_${VM_NAME} ${!floating_ip_proxy}
-openstack server add floating ip fgt_${VM_NAME} ${!floating_ip_fgt}
-
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 retries=40
+while [ $retries -gt 0 ]
+do
+  openstack server add floating ip proxy_${VM_NAME} ${!floating_ip_proxy} && \
+  openstack server add floating ip fgt_${VM_NAME} ${!floating_ip_fgt}
+  result=$?
+  if [ $result -eq 0 ] ; then
+     break
+  elif [ $retries -eq 1 ] ; then
+     echo "Servers not ready. Aborting..."
+     exit -1
+  fi
+  sleep 1
+  retries=$((retries-1))
+done
+
+
+alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_1}
+ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_2}
+
+retries=100
 while [ $retries -gt 0 ]
 do
   ssh -i t1.pem ubuntu@${!floating_ip_proxy} "ifconfig; sudo dhclient; sleep 2; ifconfig"
@@ -125,24 +177,13 @@ done
 neutron port-pair-create --ingress=${!p_A_id} --egress=${!p_B_id} pp_${VM_NAME}
 neutron port-pair-group-create --port-pair pp_${VM_NAME} pg_${VM_NAME}
 
-neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol tcp  --logical-source-port pClientM fc1M
-neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol udp  --logical-source-port pClientM fc2M
-neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol icmp  --logical-source-port pClientM --logical-destination-port pServerM fc3M
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol tcp  --logical-source-port pClientM --logical-destination-port pServerM  fc1_${VM_NAME}
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol udp  --logical-source-port pClientM --logical-destination-port pServerM  fc2_${VM_NAME}
+neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pClientMip}/24  --destination-ip-prefix ${pServerMip}/24  --protocol icmp  --logical-source-port pClientM --logical-destination-port pServerM fc3_${VM_NAME}
 
-neutron port-chain-create --port-pair-group pgClientM --port-pair-group pg_${VM_NAME} --port-pair-group pgServerM --flow-classifier fc1M --flow-classifier fc2M --flow-classifier fc3M --chain-parameters symmetric=True pc1M
+neutron port-chain-create --port-pair-group pgClientM --port-pair-group pg_${VM_NAME} --port-pair-group pgServerM --flow-classifier fc1_${VM_NAME} --flow-classifier fc2_${VM_NAME} --flow-classifier fc3_${VM_NAME} --chain-parameters symmetric=True pc_${VM_NAME}
 
-# Inverted chain
-
-#neutron port-pair-create --ingress=${!p_B_id} --egress=${!p_A_id}  pp_inv_${VM_NAME}
-#neutron port-pair-group-create --port-pair pp_inv_${VM_NAME} pg_inv_${VM_NAME}
-
-#neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pServerMip}/24  --destination-ip-prefix ${pClientMip}/24  --protocol tcp  --logical-source-port pServerM fc1invM
-#neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pServerMip}/24  --destination-ip-prefix ${pClientMip}/24  --protocol udp  --logical-source-port pServerM fc2invM
-#neutron flow-classifier-create --ethertype IPv4 --source-ip-prefix ${pServerMip}/24  --destination-ip-prefix ${pClientMip}/24  --protocol icmp  --logical-source-port pServerM fc3invM
-
-#neutron port-chain-create --port-pair-group pgServerM --port-pair-group pg_inv_${VM_NAME} --port-pair-group pgClientM --flow-classifier fc1invM --flow-classifier fc2invM --flow-classifier fc3invM pc1invM
-
-ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo apt update; \
+command="sudo apt update; \
 sudo apt install -y python3-pip; \
 sudo pip3 install hexdump; \
 rm mac_changer.py*; \
@@ -161,8 +202,11 @@ sudo ifconfig eth2 mtu 4096; \
 sudo ifconfig eth3 mtu 4096; \
 sudo ifconfig eth4 mtu 4096"
 
-ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4"
+alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
-rsync --progress ~/PycharmProjects/sfc-proxy/mac_changer.py fortinet@10.210.9.3:/home/fortinet/;ssh fortinet@10.210.9.3 "rsync -e 'ssh -i t1.pem' --progress mac_changer.py ubuntu@10.10.11.42:/home/ubuntu/"
+ssh -i t1.pem ubuntu@${!floating_ip_proxy} $command
+
+ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4" &
+
 
 

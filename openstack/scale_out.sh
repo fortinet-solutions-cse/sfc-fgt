@@ -16,6 +16,7 @@ F_IP_2="10.10.11.43"
 cat >env_${VM_NAME}.sh <<EOF
 
 source ~/nova.rc
+source env.sh
 
 VM_NAME=${VM_NAME}
 
@@ -152,7 +153,7 @@ do
      echo "Servers not ready. Aborting..."
      exit -1
   fi
-  sleep 1
+  sleep 2
   retries=$((retries-1))
 done
 
@@ -173,7 +174,7 @@ do
      echo "Servers not ready. Aborting..."
      exit -1
   fi
-  sleep 1
+  sleep 2
   retries=$((retries-1))
 done
 
@@ -207,7 +208,8 @@ sudo ifconfig eth4 mtu 4096"
 
 ssh -i t1.pem ubuntu@${!floating_ip_proxy} $command
 
-ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4" &
+ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4 2>&1 >proxy.log" &
 
+xterm -geometry 80x30+1000+220 -bg darkblue -title "SF_${VM_NAME}_PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@${F_IP_1} "tail -F proxy.log" &
 
 

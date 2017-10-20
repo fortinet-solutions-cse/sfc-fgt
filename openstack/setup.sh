@@ -53,7 +53,6 @@ nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic 
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$pServerMid --key-name t1 vmServerM
 
 
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 retries=40
 while [ $retries -gt 0 ]
@@ -71,6 +70,8 @@ do
   retries=$((retries-1))
 done
 
+alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
 retries=40
 while [ $retries -gt 0 ]
 do
@@ -84,7 +85,7 @@ do
      echo "Servers not ready. Aborting..."
      exit -1
   fi
-  sleep 1
+  sleep 2
   retries=$((retries-1))
 done
 

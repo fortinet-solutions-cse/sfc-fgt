@@ -678,17 +678,20 @@ ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp2
 ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp3
 ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp4
 
-
-
-
 --- Miscellaneous ---
 
 nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name t1 testVM
 nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
 
-
 rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/* fortinet@10.210.9.103:/home/fortinet
+
 rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.103:/home/fortinet
+rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.3:/home/fortinet
+rsync --progress ~/Downloads/fortios.qcow2 magonzalez@10.210.8.17:/home/magonzalez
 
+openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack security group delete []
 
-
+openstack security group rule create --proto tcp --dst-port 1:65535  --ingress default || echo "should have been created already"
+openstack security group rule create --proto udp --dst-port 1:65535  --ingress default || echo "should have been created already"
+openstack security group rule create --proto tcp --dst-port 1:65535  --egress default || echo "should have been created already"
+openstack security group rule create --proto udp --dst-port 1:65535  --egress default || echo "should have been created already"

@@ -161,12 +161,12 @@ done
 ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_1}
 ssh-keygen -f ~/.ssh/known_hosts -R ${F_IP_2}
 
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+sshopts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 retries=100
 while [ $retries -gt 0 ]
 do
-  ssh -i t1.pem ubuntu@${!floating_ip_proxy} "ifconfig; sudo dhclient; sleep 2; ifconfig"
+  ssh $sshopts -i t1.pem ubuntu@${!floating_ip_proxy} "ifconfig; sudo dhclient; sleep 2; ifconfig"
   result=$?
   if [ $result -eq 0 ] ; then
      break
@@ -206,9 +206,9 @@ sudo ifconfig eth2 mtu 4096; \
 sudo ifconfig eth3 mtu 4096; \
 sudo ifconfig eth4 mtu 4096"
 
-ssh -i t1.pem ubuntu@${!floating_ip_proxy} $command
+ssh $sshopts -i t1.pem ubuntu@${!floating_ip_proxy} $command
 
-ssh -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4 2>&1 >proxy.log" &
+ssh $sshopts -i t1.pem ubuntu@${!floating_ip_proxy} "sudo ./mac_changer.py -a eth1 -b eth2 -as eth3 -bs eth4 2>&1 >proxy.log" &
 
 xterm -geometry 80x30+1000+220 -bg darkblue -title "SF_${VM_NAME}_PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@${F_IP_1} "tail -F proxy.log" &
 

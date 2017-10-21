@@ -45,8 +45,8 @@ openstack floating ip create --floating-ip-address $floatIpServer ext_net
 openstack keypair create  t1 >t1.pem
 chmod 600 t1.pem
 
-openstack port create --network netM pClientM
-openstack port create --network netServerM pServerM
+openstack port create --network netM --fixed-ip ip-address=192.168.7.40 pClientM
+openstack port create --network netServerM --fixed-ip ip-address=192.168.7.41 pServerM
 . env.sh
 
 nova boot --flavor m1.smaller --image "Trusty x86_64" --nic net-name=mgmt --nic port-id=$pClientMid --key-name t1 vmClientM
@@ -70,14 +70,14 @@ do
   retries=$((retries-1))
 done
 
-alias ssh='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+sshopts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 retries=40
 while [ $retries -gt 0 ]
 do
-  ssh -i t1.pem ubuntu@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
+  ssh $sshopts -i t1.pem ubuntu@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result1=$?
-  ssh -i t1.pem ubuntu@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
+  ssh $sshopts -i t1.pem ubuntu@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result2=$?
   if [ $result1 -eq 0 ] && [ $result2 -eq 0 ] ; then
      break
@@ -89,13 +89,13 @@ do
   retries=$((retries-1))
 done
 
-ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -i eth1 -s $pServerMip $(grep pServerM port-list|awk '{print $8}')"
-ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pClientM port-list|awk '{print $8}')"
+ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo arp -i eth1 -s $pServerMip $(grep pServerM port-list|awk '{print $8}')"
+ssh $sshopts -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pClientM port-list|awk '{print $8}')"
 
-ssh -i t1.pem ubuntu@$floatIpClient "sudo arp -an"
-ssh -i t1.pem ubuntu@$floatIpServer "sudo arp -an"
+ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo arp -an"
+ssh $sshopts -i t1.pem ubuntu@$floatIpServer "sudo arp -an"
 
-ssh -i t1.pem ubuntu@$floatIpClient "sudo ip r"
+ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo ip r"
 
 
 neutron port-pair-create --ingress=${pClientMid} --egress=${pClientMid} ppClientM

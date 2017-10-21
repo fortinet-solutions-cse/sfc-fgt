@@ -32,6 +32,8 @@ openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netSe
 openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
 qemu-img convert fortios.qcow2 fortios.raw
 openstack image create --file fortios.raw --public "FortiGate_Raw" --disk-format qcow2 --container-format bare
+qemu-img convert mac-vwp-fortios.qcow2 mac-vwp-fortios.raw
+openstack image create --file mac-vwp-fortios.raw --public "FortiGate_vwp_mac_disable" --disk-format qcow2 --container-format bare
 
 openstack flavor create --ram 512 --disk 8 --vcpus 1 m1.smaller
 openstack flavor create --ram 512 --disk 1 --vcpus 1 m1.tiny

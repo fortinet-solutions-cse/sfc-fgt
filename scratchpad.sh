@@ -679,15 +679,21 @@ ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp3
 ssh-keygen -f "/home/fortinet/.ssh/known_hosts" -R $floatIp4
 
 --- Miscellaneous ---
-
 nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name t1 testVM
 nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
 
-rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/* fortinet@10.210.9.103:/home/fortinet
+IP=10.210.8.17
+USR=magonzalez
 
-rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.103:/home/fortinet
-rsync --progress ~/Downloads/fortios.qcow2 fortinet@10.210.9.3:/home/fortinet
-rsync --progress ~/Downloads/fortios.qcow2 magonzalez@10.210.8.17:/home/magonzalez
+IP=10.210.9.103
+USR=fortinet
+
+rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/*                       ${USR}@${IP}:/home/${USR}
+
+rsync --progress ~/Downloads/fortios/*.qcow2                                 ${USR}@${IP}:/home/${USR}/cloud-images
+rsync --progress ~/Downloads/fortitester/*.qcow2                             ${USR}@${IP}:/home/${USR}/cloud-images
+rsync --progress ~/Downloads/mac-vwp-fortios/mac-vwp-fortios.qcow2           ${USR}@${IP}:/home/${USR}/cloud-images
+rsync --progress ~/Downloads/fortios/*.qcow2 ~/Downloads/fortitester/*.qcow2 ${USR}@${IP}:/home/${USR}/cloud-images
 
 openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack security group delete []
 
@@ -695,3 +701,42 @@ openstack security group rule create --proto tcp --dst-port 1:65535  --ingress d
 openstack security group rule create --proto udp --dst-port 1:65535  --ingress default || echo "should have been created already"
 openstack security group rule create --proto tcp --dst-port 1:65535  --egress default || echo "should have been created already"
 openstack security group rule create --proto udp --dst-port 1:65535  --egress default || echo "should have been created already"
+
+
+juju run --application nova-compute sudo systemctl restart nova-compute.service
+juju run --application glance sudo systemctl restart glance-api.service
+
+
+
+gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.40
+gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.40
+
+gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41
+gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41
+
+gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t admin@10.10.11.47
+
+sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.tcpdump
+
+openstack server pause fgt_7
+openstack server pause fgt_9
+openstack server unpause fgt_7
+openstack server unpause fgt_9
+
+
+sudo ovs-ofctl del-flows br-sfc
+sudo ovs-ofctl dump-flows br-sfc
+sudo ovs-ofctl add-flow br-sfc table=0,tcp,in_port=1,nw_src=192.168.7.41/32,nw_dst=192.168.70.70/32,actions=mod_dl_dst:00:00:11:D0:A0:0E,NORMAL
+sudo ovs-ofctl dump-flows br-sfc
+
+sudo ovs-ofctl del-flows br-sfc
+sudo ovs-ofctl dump-flows br-sfc
+sudo ovs-ofctl add-flow br-sfc table=0,in_port=1,nw_src=192.168.7.0/24,nw_dst=192.168.70.0/24,actions=mod_dl_dst:00:00:11:D0:A0:0E,NORMAL
+sudo ovs-ofctl dump-flows br-sfc
+
+sudo ovs-dpctl dump-flows
+
+sudo dpkg-reconfigure openvswitch-switch
+
+
+sudo ovs-ofctl add-flow br-sfc table=0,tcp,in_port=1,nw_src=192.168.7.41/32,nw_dst=192.168.90.90/32,actions=mod_dl_dst:00:00:11:dc:81:be,NORMAL

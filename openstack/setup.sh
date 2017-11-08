@@ -29,11 +29,14 @@ openstack subnet create --network netM --subnet-range 192.168.7.0/24 netM_subnet
 openstack network create netServerM --provider-network-type vxlan --disable-port-security
 openstack subnet create --network netServerM --subnet-range 192.168.7.0/24 netServerM_subnet
 
-openstack image create --file fortios.qcow2 --public "FortiGate" --disk-format qcow2 --container-format bare
-qemu-img convert fortios.qcow2 fortios.raw
-openstack image create --file fortios.raw --public "FortiGate_Raw" --disk-format qcow2 --container-format bare
-qemu-img convert mac-vwp-fortios.qcow2 mac-vwp-fortios.raw
-openstack image create --file mac-vwp-fortios.raw --public "FortiGate_vwp_mac_disable" --disk-format qcow2 --container-format bare
+openstack image create --file ~/cloud-images/mac-vwp-fortios.qcow2 --public "FortiGate.qcow2" --disk-format qcow2
+if [ $? -ne 0 ]; then
+  echo "Error uploading image"
+  exit -1
+fi
+
+qemu-img convert ~/cloud-images/mac-vwp-fortios.qcow2 ~/cloud-images/mac-vwp-fortios.raw
+openstack image create --file ~/cloud-images/mac-vwp-fortios.raw --public "FortiGate_vwp_mac_disable" --disk-format raw --container-format bare
 
 openstack flavor create --ram 512 --disk 8 --vcpus 1 m1.smaller
 openstack flavor create --ram 512 --disk 1 --vcpus 1 m1.tiny
@@ -68,7 +71,7 @@ do
      echo "Servers not ready. Aborting..."
      exit -1
   fi
-  sleep 1
+  sleep 5
   retries=$((retries-1))
 done
 
@@ -87,17 +90,13 @@ do
      echo "Servers not ready. Aborting..."
      exit -1
   fi
-  sleep 2
+  sleep 5
   retries=$((retries-1))
 done
 
-ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo arp -i eth1 -s $pServerMip $(grep pServerM port-list|awk '{print $8}')"
-ssh $sshopts -i t1.pem ubuntu@$floatIpServer "sudo arp -i eth1 -s $pClientMip $(grep pClientM port-list|awk '{print $8}')"
-
-ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo arp -an"
-ssh $sshopts -i t1.pem ubuntu@$floatIpServer "sudo arp -an"
-
-ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo ip r"
+ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo apt install -y openvswitch-switch;" \
+ "sudo ovs-vsctl add-br br-sfc -- set bridge br-sfc protocols=OpenFlow10,OpenFlow12,OpenFlow13;" \
+ "sudo ovs-vsctl add-port br-sfc eth1"
 
 
 neutron port-pair-create --ingress=${pClientMid} --egress=${pClientMid} ppClientM

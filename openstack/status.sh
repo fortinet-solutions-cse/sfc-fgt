@@ -4,27 +4,26 @@ set -x
 
 . env.sh
 
-openstack network list
+openstack --insecure network list
 
-openstack subnet list
+openstack --insecure subnet list
 
-openstack server list
+openstack --insecure server list
 
-neutron flow-classifier-list
+openstack --insecure sfc sfc flow classifier list
 
-neutron port-pair-list
+openstack --insecure sfc port pair list
 
-neutron port-pair-group-list
+openstack --insecure sfc port pair group list
 
-neutron port-chain-list
+openstack --insecure sfc port chain list
 
-neutron port-list
+openstack --insecure port list
 
-openstack floating ip list
+openstack --insecure floating ip list
 
-openstack flavor list
+openstack --insecure flavor list
 
-openstack image list
-
+openstack --insecure image list
 
 exit 0

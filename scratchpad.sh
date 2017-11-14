@@ -269,7 +269,7 @@ grep 59.. ~/.vnc/*.log
 #===========================
 
 NEUTRON_EXT_NET_GW="10.10.10.1"
-NEUTRON_EXT_NET_CIDR="10.10.10.0/24"
+NEUTRON_EXT_NET_CIDR="10.10.10.0/23"
 
 NEUTRON_EXT_NET_NAME="ext_net" # Unused
 NEUTRON_DNS=$NEUTRON_EXT_NET_GW
@@ -324,6 +324,7 @@ openstack router create provider-router
 openstack router set --external-gateway ext_net provider-router
 openstack router add subnet provider-router mgmt_subnet
 
+openstack security group list -f value|awk '{print $1}'|xargs -I[] openstack security group delete []
 
 #Configure the default security group to allow ICMP and SSH
 openstack security group rule create --proto icmp default || echo "should have been created already"
@@ -669,7 +670,6 @@ glance image-delete $(glance image-list|grep FortiGate|awk '{print $2}')
 
 openstack flavor delete m1.fortigate
 
-rm t1.pem
 rm myConfig1.txt
 rm myConfig2.txt
 
@@ -683,6 +683,9 @@ nova boot --flavor m1.tiny --image "Cirros 0.3.4" --nic net-name=netM --key-name
 nova boot --flavor m1.medium --image "Trusty x86_64" --nic net-name=netM --key-name t1 test2VM
 
 IP=10.210.8.17
+USR=magonzalez
+
+IP=10.210.9.130
 USR=magonzalez
 
 IP=10.210.9.103
@@ -706,15 +709,35 @@ openstack security group rule create --proto udp --dst-port 1:65535  --egress de
 juju run --application nova-compute sudo systemctl restart nova-compute.service
 juju run --application glance sudo systemctl restart glance-api.service
 
+juju run --application nova-compute -- sudo ovs-ofctl dump-flows br-int --names --color
 
 
-gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.40
-gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.40
 
-gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41
-gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41
 
-gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t admin@10.10.11.47
+xterm -title "Client: 5 Namespace" -fa "Monospace Regular" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t -i t1.pem ubuntu@10.10.11.40 sudo ip netns exec app_5 bash --rcfile /dev/null \;sleep 10 &
+xterm -title "Client: 7 Namespace" -fa "Monospace Regular" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t -i t1.pem ubuntu@10.10.11.40 sudo ip netns exec app_7 bash --rcfile /dev/null \;sleep 10 &
+xterm -title "Client VM" -bg grey -fg black -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.40 &
+
+#gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41
+
+xterm -title "Server TCPDUMP" -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41 sudo tcpdump -vvvneli eth1 &
+
+xterm -title "Web Server" -fg yellow -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i t1.pem ubuntu@10.10.11.41 "sudo pkill python\;sudo python -m SimpleHTTPServer 80 \;sleep 10" &
+
+
+xterm -title "Sniffer FGT:5" -bg darkblue -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t admin@10.10.11.45 diag sniffer packet port3 tcp &
+xterm -title "Sniffer FGT:7" -bg darkblue -e ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t admin@10.10.11.47 diag sniffer packet port3 tcp &
+
+
+xterm -title "Flows: nova 0" -geometry 200x50 -e watch -c ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} juju ssh --pty nova-compute/0  sudo ovs-ofctl dump-flows br-int --names --color &
+xterm -title "Flows: nova 1" -geometry 200x50 -e watch -c ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} juju ssh --pty nova-compute/1  sudo ovs-ofctl dump-flows br-int --names --color &
+
+
+
+
+#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t -i t1.pem ubuntu@10.10.11.40 sudo ip netns exec app_5 bash --rcfile /dev/null \;sleep 10 &
+
+#gnome-terminal -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${USR}@${IP} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t admin@10.10.11.45 diag sniffer packet port3 tcp
 
 sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.tcpdump
 
@@ -723,6 +746,9 @@ openstack server pause fgt_9
 openstack server unpause fgt_7
 openstack server unpause fgt_9
 
+
+sshuttle -r 10.210.8.17 192.168.122.3/24
+sshuttle -r fortinet@10.210.9.103 10.10.10.0/23
 
 sudo ovs-ofctl del-flows br-sfc
 sudo ovs-ofctl dump-flows br-sfc

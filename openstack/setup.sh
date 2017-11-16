@@ -3,8 +3,6 @@ set -x
 
 . ~/nova.rc
 
-./cleanup.sh
-
 cat >env.sh <<EOF
 
 source ~/nova.rc
@@ -14,11 +12,11 @@ floatIpServer="10.10.11.41"
 
 openstack --insecure port list >port-list
 
-pClientMid=\$(cat port-list|grep pClientM|awk  '{print \$2}')
-#pClientMip=\$(cat port-list|grep pClientM|awk '{print \$13}'|cut -d "\"" -f2)
+pClientMid=\$(cat port-list|grep pClientM|awk -F '|' '{print \$2}'|tr -d ' ')
+pClientMip=\$(cat port-list|grep pClientM|awk -F '|' '{print \$5}'|cut -d "'" -f2|tr -d ' ')
 
-pServerMid=\$(cat port-list|grep pServerM|awk  '{print \$2}')
-#pServerMip=\$(cat port-list|grep pServerM|awk '{print \$13}'|cut -d "\"" -f2)
+pServerMid=\$(cat port-list|grep pServerM|awk -F '|' '{print \$2}'|tr -d ' ')
+pServerMip=\$(cat port-list|grep pServerM|awk -F '|' '{print \$5}'|cut -d "'" -f2|tr -d ' ')
 
 EOF
 

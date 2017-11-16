@@ -10,7 +10,7 @@ openstack --insecure subnet list
 
 openstack --insecure server list
 
-openstack --insecure sfc sfc flow classifier list
+openstack --insecure sfc flow classifier list
 
 openstack --insecure sfc port pair list
 

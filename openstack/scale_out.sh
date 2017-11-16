@@ -29,13 +29,11 @@ VM_ID=${VM_ID}
 
 floatIp_${VM_ID}_fgt=${F_IP_1}
 
-openstack --insecure sfc port list >port-list
+openstack --insecure port list >port-list
 
-p_A_fgt_${VM_ID}_id=\$(cat port-list|grep p_A_fgt_$VM_ID|awk '{print \$2}')
-#p_A_fgt_${VM_ID}_ip=\$(cat port-list|grep p_A_fgt_$VM_ID|awk -F"|" '{print \$5}'|cut -d "'" -f2)
+p_A_fgt_${VM_ID}_id=\$(cat port-list|grep p_A_fgt_$VM_ID|awk '{print \$2}'|tr -d ' ')
 
-p_B_fgt_${VM_ID}_id=\$(cat port-list|grep p_B_fgt_$VM_ID|awk '{print \$2}')
-#p_B_fgt_${VM_ID}_ip=\$(cat port-list|grep p_B_fgt_$VM_ID|awk '{print \$13}'|cut -d "\"" -f2)
+p_B_fgt_${VM_ID}_id=\$(cat port-list|grep p_B_fgt_$VM_ID|awk '{print \$2}'|tr -d ' ')
 
 EOF
 
@@ -133,7 +131,7 @@ end
 EOF
 
 
-openstack --insecure server create --flavor m1.fortigate --image "FortiGate_vwp_mac_disable" --nic net-id=mgmt --nic port-id=${!p_A_id} --nic port-id=${!p_B_id} --config-drive true --user-data myConfig_${VM_ID}.txt --ephemeral size=5 fgt_${VM_ID}
+openstack --insecure server create --flavor m1.fortigate --image "FortiGate_vwp_mac_disable" --nic net-id=mgmt --nic port-id=${!p_A_id} --nic port-id=${!p_B_id} --config-drive true --user-data myConfig_${VM_ID}.txt fgt_${VM_ID}
 
 
 retries=40
@@ -167,7 +165,7 @@ ssh $sshopts -i t1.pem ubuntu@$floatIpClient  "sudo ip netns add app_${VM_ID};" 
 "sudo ip link set veth-app_${VM_ID} netns app_${VM_ID};" \
 "sudo ip netns exec app_${VM_ID} ifconfig veth-app_${VM_ID} ${VM_ADDRESS} up;" \
 "sudo ip netns exec app_${VM_ID} ip link set dev veth-app_${VM_ID} addr ${MAC};" \
-"sudo ip netns exec app_${VM_ID} arp -s ${pServerMip} $(grep pServerM port-list|awk '{print $8}') -i veth-app_${VM_ID};" \
+"sudo ip netns exec app_${VM_ID} arp -s ${pServerMip} $(grep pServerM port-list|awk -F '|' '{print $4}') -i veth-app_${VM_ID};" \
 "sudo ip netns exec app_${VM_ID} ip link set dev veth-app_${VM_ID} up;" \
 "sudo ip netns exec app_${VM_ID} ip link set dev lo up;" \
 "sudo ip netns exec app_${VM_ID} ifconfig veth-app_${VM_ID} mtu 1400;" \
@@ -189,5 +187,7 @@ openstack --insecure sfc flow classifier create --ethertype IPv4 --source-ip-pre
 openstack --insecure sfc flow classifier create --ethertype IPv4 --source-ip-prefix ${VM_ADDRESS_IP}/32  --destination-ip-prefix ${pServerMip}/24  --protocol udp  --logical-source-port pClientM --logical-destination-port pServerM  fc2_${VM_ID}
 openstack --insecure sfc flow classifier create --ethertype IPv4 --source-ip-prefix ${VM_ADDRESS_IP}/32  --destination-ip-prefix ${pServerMip}/24  --protocol icmp  --logical-source-port pClientM --logical-destination-port pServerM fc3_${VM_ID}
 
-openstack --insecure sfc port chain create --port-pair-group pgClientM --port-pair-group pg_${VM_ID} --port-pair-group pgServerM --flow-classifier fc1_${VM_ID} --flow-classifier fc2_${VM_ID} --flow-classifier fc3_${VM_ID} --chain-parameters symmetric=True pc_${VM_ID}
+neutron port-chain-create  --port-pair-group pgClientM --port-pair-group pg_${VM_ID} --port-pair-group pgServerM --flow-classifier fc1_${VM_ID} --flow-classifier fc2_${VM_ID} --flow-classifier fc3_${VM_ID} --chain-parameters symmetric=True pc_${VM_ID}
+
+#openstack --insecure sfc port chain create --port-pair-group pgClientM --port-pair-group pg_${VM_ID} --port-pair-group pgServerM --flow-classifier fc1_${VM_ID} --flow-classifier fc2_${VM_ID} --flow-classifier fc3_${VM_ID} --chain-parameters symmetric=True pc_${VM_ID}
 

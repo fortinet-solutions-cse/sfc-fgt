@@ -54,7 +54,9 @@ fi
 #************************************************
 
 if [ ! -e distribution-karaf-0.6.0-Carbon ]; then
-  wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+  if [ ! -e distribution-karaf-0.6.0-Carbon.tar.gz ]; then
+    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+  fi
   tar xvfz distribution-karaf-0.6.0-Carbon.tar.gz
   cp karaf distribution-karaf-0.6.0-Carbon/
 fi

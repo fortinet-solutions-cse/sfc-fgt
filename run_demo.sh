@@ -25,6 +25,7 @@
 #
 # Took ideas from opendaylight/sfc project
 #************************************************
+set -x
 
 source env.sh
 
@@ -376,23 +377,26 @@ do
      exit -1
    fi
 
-   sleep 3
+   sleep 1
 
-   sudo virt-sysprep -a ${VM_NAME}.img --hostname ${VM_NAME} --firstboot-command 'sudo ssh-keygen -A' 
+   sudo virt-sysprep -a ${VM_NAME}.img --hostname ${VM_NAME} --firstboot-command "sudo ssh-keygen -A;grep ${VM_NAME} /etc/hosts||echo 127.0.0.1 ${VM_NAME} >>/etc/hosts"
 
    cat >meta-data <<EOF
 instance-id: ${VM_NAME}
 local-hostname: ${VM_NAME}
 EOF
-sleep 3
    rm -rf ${VM_NAME}-cidata.iso
    genisoimage -output ${VM_NAME}-cidata.iso -volid cidata -joliet -rock user-data meta-data
    chmod 666 ${VM_NAME}-cidata.iso
-sleep 1
    virsh change-media ${VM_NAME} hdb --eject --config --force
-sleep 1
    virsh change-media ${VM_NAME} hdb ${PWD}/${VM_NAME}-cidata.iso --insert --config --force
 done
+
+#************************************************
+# Modify etc/hosts also in Classifier1
+#************************************************
+
+sudo virt-sysprep -a ${CLASSIFIER1_NAME}.img --hostname ${CLASSIFIER1_NAME} --firstboot-command "ssh-keygen -A; rm -rf /var/lib/cloud/*; cloud-init init;grep ${CLASSIFIER1_NAME} /etc/hosts||echo 127.0.0.1 ${CLASSIFIER1_NAME} >>/etc/hosts"
 
 #************************************************
 # Start everything up

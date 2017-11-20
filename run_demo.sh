@@ -54,21 +54,13 @@ fi
 # Get OpenDayLight
 #************************************************
 
-#if [ ! -e distribution-karaf-0.6.1-Carbon ]; then
-#  if [ ! -e distribution-karaf-0.6.1-Carbon.tar.gz ]; then
-if [ ! -d karaf-0.7.0 ]; then
-  if [ ! -e karaf-0.7.0.tar.gz ]; then
-#    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
-#    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.1-Carbon/distribution-karaf-0.6.1-Carbon.tar.gz
-   wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/karaf/0.7.0/karaf-0.7.0.tar.gz
-  fi
-#  tar xvfz distribution-karaf-0.6.1-Carbon.tar.gz
-  tar xvfz karaf-0.7.0.tar.gz
-#  cp karaf distribution-karaf-0.6.1-Carbon/
-  cp karaf karaf-0.7.0/
+if [ ! -e karaf-0.7.0.tar.gz ]; then
+  wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/karaf/0.7.0/karaf-0.7.0.tar.gz
 fi
+rm -rf karaf-0.7.0/
+tar xvfz karaf-0.7.0.tar.gz
+cp karaf karaf-0.7.0/
 
-#xterm -geometry 110x25+650+300 -e "cd ${PWD}/distribution-karaf-0.6.1-Carbon/ && ./karaf" &
 xterm -geometry 110x25+650+300 -e "cd ${PWD}/karaf-0.7.0/ && ./karaf" &
 sleep 5
 
@@ -85,87 +77,6 @@ sleep 5
 rm -f proxy.py
 wget https://raw.githubusercontent.com/fortinet-tigers/sfc-proxy/master/proxy.py
 chmod 777 proxy.py
-
-#************************************************
-#Check SFC is started
-#************************************************
-retries=6
-while [ $retries -gt 0 ]
-do
-   karaf=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} system:name)
-   if [ $? -ne 0 ] ;  then
-     echo "Karaf is not started... Retrying..."
-     sleep 10
-     retries=$((retries-1))
-   else
-     break
-   fi
-done
-
-
-#************************************************
-#Install necessary ODL features automatically
-#************************************************
-
-#echo "Install and wait for sfc features:"
-#
-#sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:install odl-restconf ${features}
-#retries=6
-#while [ $retries -gt 0 ]
-#do
-#    installed=0
-#    installed_features=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:list -i | grep sfc | awk '{print $1;}')
-#    echo "Installed features: ${installed_features}"
-#    echo "Expected features: ${features}"
-#    i=0
-#    j=0
-#    for feature in ${features}
-#    do
-#        i=$((i+1))
-#        if [[ ${installed_features} =~ $feature ]] ; then
-#            j=$((j+1))
-#        fi
-#    done
-#    if [ $i -eq $j ] ; then
-#        installed=1
-#        break
-#    fi
-#    echo "Waiting for ${features} installed..."
-#    sleep 10
-#    retries=$((retries-1))
-#done
-#
-#if [ $installed -ne 1 ] ; then
-#    echo "Failed to install features: ${features}"
-#    exit -1
-#fi
-
-#************************************************
-# Ensure renderer is initialized successfully
-#************************************************
-
-retries=10
-while [ $retries -gt 0 ]
-do
-    OK=0
-    result=$(curl -H "Content-Type: application/json" -H "Cache-Control: no-cache" -X GET --user admin:admin http://${LOCALHOST}:8181/restconf/operational/network-topology:network-topology/)
-    OK=$((OK+$?))
-    result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcOfRenderer")
-    OK=$((OK+$?))
-    result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcScfOfRenderer")
-    OK=$((OK+$?))
-    if [ $OK -eq 0 ] ; then
-        break
-    fi
-    echo "Waiting Openflow renderer and classifier initialized..."
-    sleep 3
-    retries=$((retries-1))
-done
-
-if [ $retries -eq 0 ] ; then
-    echo "features are not started correctly: ${features}"
-    exit -1
-fi
 
 #************************************************
 # Ensure there is a generated public key
@@ -347,10 +258,37 @@ if [ ! ${SKIP_OVS_COMPILATION} ];then
 fi
 
 #************************************************
+# Ensure ODL renderer is initialized successfully
+#************************************************
+
+retries=20
+while [ $retries -gt 0 ]
+do
+    OK=0
+    result=$(curl -H "Content-Type: application/json" -H "Cache-Control: no-cache" -X GET --user admin:admin http://${LOCALHOST}:8181/restconf/operational/network-topology:network-topology/)
+    OK=$((OK+$?))
+    result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcOfRenderer")
+    OK=$((OK+$?))
+    result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcScfOfRenderer")
+    OK=$((OK+$?))
+    if [ $OK -eq 0 ] ; then
+        break
+    fi
+    echo "Waiting Openflow renderer and classifier initialized..."
+    sleep 5
+    retries=$((retries-1))
+done
+
+if [ $retries -eq 0 ] ; then
+    echo "features are not started correctly: ${features}"
+    exit -1
+fi
+
+#************************************************
 # Stop first VM (prior to clone image)
 #************************************************
 
-sleep 35
+sleep 30
 virsh shutdown ${CLASSIFIER1_NAME}
 
 sleep 10
@@ -533,7 +471,7 @@ EOF
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF3_NAME}-cidata.iso cfg-drv-fgt2
 virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF3_NAME} --ram 1024 --vcpus 1 --disk fortios2.qcow2,size=3 --disk fgt-logs2.qcow2,size=30 --disk ${SF3_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF3_MAC_ADMIN},model=virtio --network bridge=virbr4,mac=${SF3_MAC},model=virtio --network bridge=virbr5,mac=${SF3_MAC2},model=virtio
 
-sleep 45
+sleep 5
 
 #************************************************
 # Add two more interfaces to SF2_PROXY

@@ -54,16 +54,23 @@ fi
 # Get OpenDayLight
 #************************************************
 
-if [ ! -e distribution-karaf-0.6.0-Carbon ]; then
-  if [ ! -e distribution-karaf-0.6.0-Carbon.tar.gz ]; then
-    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+#if [ ! -e distribution-karaf-0.6.1-Carbon ]; then
+#  if [ ! -e distribution-karaf-0.6.1-Carbon.tar.gz ]; then
+if [ ! -d karaf-0.7.0 ]; then
+  if [ ! -e karaf-0.7.0.tar.gz ]; then
+#    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.0-Carbon/distribution-karaf-0.6.0-Carbon.tar.gz
+#    wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/distribution-karaf/0.6.1-Carbon/distribution-karaf-0.6.1-Carbon.tar.gz
+   wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/karaf/0.7.0/karaf-0.7.0.tar.gz
   fi
-  tar xvfz distribution-karaf-0.6.0-Carbon.tar.gz
-  cp karaf distribution-karaf-0.6.0-Carbon/
+#  tar xvfz distribution-karaf-0.6.1-Carbon.tar.gz
+  tar xvfz karaf-0.7.0.tar.gz
+#  cp karaf distribution-karaf-0.6.1-Carbon/
+  cp karaf karaf-0.7.0/
 fi
 
-xterm -geometry 110x25+650+300 -e "cd ${PWD}/distribution-karaf-0.6.0-Carbon/ && ./karaf" &
-sleep 10
+#xterm -geometry 110x25+650+300 -e "cd ${PWD}/distribution-karaf-0.6.1-Carbon/ && ./karaf" &
+xterm -geometry 110x25+650+300 -e "cd ${PWD}/karaf-0.7.0/ && ./karaf" &
+sleep 5
 
 #************************************************
 # Clean previous executions
@@ -82,55 +89,56 @@ chmod 777 proxy.py
 #************************************************
 #Check SFC is started
 #************************************************
+retries=6
+while [ $retries -gt 0 ]
+do
+   karaf=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} system:name)
+   if [ $? -ne 0 ] ;  then
+     echo "Karaf is not started... Retrying..."
+     sleep 10
+     retries=$((retries-1))
+   else
+     break
+   fi
+done
 
-karaf=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} system:name)
-if [ $? -ne 0 ] ;  then
-    echo "Please start ODL SFC first."
-    exit -1
-fi
-
-echo "Install and wait for sfc features: ${features}"
-
-#************************************************
-#Uninstall unnecessary ODL features automatically
-#************************************************
-
-sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:uninstall ${uninstall_features}
 
 #************************************************
 #Install necessary ODL features automatically
 #************************************************
 
-sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:install odl-restconf ${features}
-retries=6
-while [ $retries -gt 0 ]
-do
-    installed=0
-    installed_features=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:list -i | grep sfc | awk '{print $1;}')
-    echo "Installed features: ${installed_features}"
-    echo "Expected features: ${features}"
-    i=0
-    j=0
-    for feature in ${features}
-    do
-        i=$((i+1))
-        if [[ ${installed_features} =~ $feature ]] ; then
-            j=$((j+1))
-        fi
-    done
-    if [ $i -eq $j ] ; then
-        installed=1
-        break
-    fi
-    echo "Waiting for ${features} installed..."
-    sleep 10
-    retries=$((retries-1))
-done
-
-if [ $installed -ne 1 ] ; then
-    echo "Failed to install features: ${features}"
-    exit -1
-fi
+#echo "Install and wait for sfc features:"
+#
+#sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:install odl-restconf ${features}
+#retries=6
+#while [ $retries -gt 0 ]
+#do
+#    installed=0
+#    installed_features=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} feature:list -i | grep sfc | awk '{print $1;}')
+#    echo "Installed features: ${installed_features}"
+#    echo "Expected features: ${features}"
+#    i=0
+#    j=0
+#    for feature in ${features}
+#    do
+#        i=$((i+1))
+#        if [[ ${installed_features} =~ $feature ]] ; then
+#            j=$((j+1))
+#        fi
+#    done
+#    if [ $i -eq $j ] ; then
+#        installed=1
+#        break
+#    fi
+#    echo "Waiting for ${features} installed..."
+#    sleep 10
+#    retries=$((retries-1))
+#done
+#
+#if [ $installed -ne 1 ] ; then
+#    echo "Failed to install features: ${features}"
+#    exit -1
+#fi
 
 #************************************************
 # Ensure renderer is initialized successfully
@@ -324,7 +332,7 @@ done
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo chmod 777 /vagrant/"
 
-rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --exclude distribution-karaf-* --max-size=1048576 ./*  ${CLASSIFIER1_IP}:/vagrant/
+rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --exclude karaf-0.7.0* --max-size=1048576 ./*  ${CLASSIFIER1_IP}:/vagrant/
 
 #************************************************
 # Install OVS on first VM
@@ -342,8 +350,10 @@ fi
 # Stop first VM (prior to clone image)
 #************************************************
 
-sleep 45
-virsh destroy ${CLASSIFIER1_NAME}
+sleep 35
+virsh shutdown ${CLASSIFIER1_NAME}
+
+sleep 10
 
 #************************************************
 # Copy image with OVS for later reuse
@@ -353,7 +363,6 @@ if [ ! ${SKIP_OVS_COMPILATION} ];then
    sudo cp ${CLASSIFIER1_NAME}.img ${PREVIOUS_SAVED_IMAGE_NAME}
 fi
 
-sleep 15
 
 #************************************************
 # Clone images for the rest of vms
@@ -465,6 +474,7 @@ EOF
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF2_NAME}-cidata.iso cfg-drv-fgt
 virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF2_NAME} --ram 1024 --vcpus 1 --disk fortios.qcow2,size=3 --disk fgt-logs.qcow2,size=30 --disk ${SF2_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF2_MAC_ADMIN},model=virtio --network bridge=virbr2,mac=${SF2_MAC},model=virtio --network bridge=virbr3,mac=${SF2_MAC2},model=virtio
 
+sleep 5
 
 #************************************************
 # Start Second FGT-VM

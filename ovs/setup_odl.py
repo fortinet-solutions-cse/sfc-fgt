@@ -331,8 +331,8 @@ def get_service_function_chains_data():
                 "name": "SFC2",
                 "sfc-service-function": [
                     {
-                        "name": "dpi-abstract1",
-                        "type": "dpi"
+                        "name": "firewall-abstract1",
+                        "type": "firewall"
                     },
                     {
                         "name": "firewall-abstract2",

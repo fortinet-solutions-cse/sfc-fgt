@@ -9,5 +9,6 @@ fgt-logs*.qcow2
 meta-data
 user-data
 distribution-karaf-*
+karaf-0.7.0*
 .idea
 

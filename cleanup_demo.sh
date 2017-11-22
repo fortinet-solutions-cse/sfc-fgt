@@ -59,11 +59,17 @@ rm -f ${SF4_PROXY_NAME}-cidata.iso
 
 rm -f fgt-logs.qcow2
 rm -f fgt-logs2.qcow2
+rm -f fgt-logs3.qcow2
+
 rm -f fortios.qcow2
 rm -f fortios2.qcow2
+rm -f fortios3.qcow2
+
 rm -f proxy.py*
+
 rm -rf cfg-drv-fgt
 rm -rf cfg-drv-fgt2
+rm -rf cfg-drv-fgt3
 
 rm -f user-data
 rm -f meta-data

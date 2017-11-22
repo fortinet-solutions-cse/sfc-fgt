@@ -24,7 +24,6 @@ proxies = {
     "http": None,
     "https": None
 }
-
 SLEEP_DELAY = 2
 
 
@@ -35,12 +34,12 @@ def put(host, port, uri, data, debug=False):
 
     headers = {'Content-type': 'application/yang.data+json',
                'Accept': 'application/yang.data+json'}
-    if debug == True:
+    if debug:
         print "PUT %s" % url
         print json.dumps(data, indent=4, sort_keys=True)
     r = requests.put(url, proxies=proxies, data=json.dumps(data), headers=headers,
                      auth=HTTPBasicAuth(USERNAME, PASSWORD))
-    if debug == True:
+    if debug:
         print r.text
     r.raise_for_status()
     time.sleep(SLEEP_DELAY)
@@ -52,12 +51,12 @@ def post(host, port, uri, data, debug=False):
     url = 'http://' + host + ":" + port + uri
     headers = {'Content-type': 'application/yang.data+json',
                'Accept': 'application/yang.data+json'}
-    if debug == True:
+    if debug:
         print "POST %s" % url
         print json.dumps(data, indent=4, sort_keys=True)
     r = requests.post(url, proxies=proxies, data=json.dumps(data), headers=headers,
                       auth=HTTPBasicAuth(USERNAME, PASSWORD))
-    if debug == True:
+    if debug:
         print r.text
     r.raise_for_status()
     time.sleep(SLEEP_DELAY)
@@ -69,10 +68,10 @@ def delete(host, port, uri, debug=False):
     url = 'http://' + host + ":" + port + uri
     headers = {'Content-type': 'application/yang.data+json',
                'Accept': 'application/yang.data+json'}
-    if debug == True:
+    if debug:
         print "DELETE %s" % url
     r = requests.delete(url, proxies=proxies, headers=headers, auth=HTTPBasicAuth(USERNAME, PASSWORD))
-    if debug == True:
+    if debug:
         print r.text
     r.raise_for_status()
     time.sleep(SLEEP_DELAY)
@@ -140,10 +139,6 @@ def get_service_function_paths_data():
             ]
         }
     }
-
-
-def get_service_function_metadata_uri():
-    return "/restconf/config/service-function-path-metadata:service-function-metadata/"
 
 
 def get_create_rendered_service_path_uri():

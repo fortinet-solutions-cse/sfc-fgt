@@ -399,7 +399,7 @@ EOF
 cat >cfg-drv-fgt/openstack/latest/user_data <<EOF
 config system interface
 edit "port1"
-set ip ${SF2_IP}/24
+set ip ${SF2_IP_ADMIN}/24
 next
 end
 config system virtual-wire-pair
@@ -450,7 +450,7 @@ EOF
 cat >cfg-drv-fgt2/openstack/latest/user_data <<EOF
 config system interface
    edit "port1"
-      set ip ${SF3_IP}/24
+      set ip ${SF3_IP_ADMIN}/24
    next
    edit "port2"
       set mtu-override enable
@@ -509,7 +509,7 @@ EOF
 cat >cfg-drv-fgt3/openstack/latest/user_data <<EOF
 config system interface
    edit "port1"
-      set ip ${SF4_IP}/24
+      set ip ${SF4_IP_ADMIN}/24
    next
    edit "port2"
       set mtu-override enable
@@ -662,6 +662,35 @@ xterm -geometry 80x30+600+450 -bg grey -fg black -title "User 2 shell" -e ssh -t
 
 xterm -geometry 80x30+1180+450 -bg grey -fg black -title "User 3 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app3 bash" &
 
+#************************************************
+# Support inet traffic in the chains.
+# Output Gatway is in Classifier2
+#************************************************
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo bash -c 'sudo echo nameserver 8.8.8.8 > /etc/resolv.conf'"
+
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app sudo ip route add default dev veth-app via 192.168.2.2;" \
+"sudo ip netns exec app sudo arp -s 216.58.201.131 00:00:22:22:22:22 -i veth-app;" \
+"sudo ip netns exec app sudo arp -s 216.58.201.132 00:00:22:22:22:22 -i veth-app;" \
+"sudo ip netns exec app sudo arp -s 157.240.2.35 00:00:22:22:22:22 -i veth-app;" \
+"sudo ip netns exec app sudo arp -s 157.240.2.35 00:00:22:22:22:22 -i veth-app;" \
+"sudo ip netns exec app sudo arp -s 31.13.83.36 00:00:22:22:22:22 -i veth-app;" \
+"sudo ip netns exec app sudo arp -s 8.8.8.8 00:00:22:22:22:22 -i veth-app;"
+
+virsh attach-interface --domain classifier2 --type network \
+        --source virbr1 \
+        --mac 00:00:11:11:33:55 --config --live
+
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo ip link set eth1 netns app;" \
+"sudo ip netns exec app sudo ifconfig eth1 192.168.60.150/24 up;" \
+"sudo ip netns exec app ip route add default dev eth1 via 192.168.60.1"
+
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo ip netns exec app bash -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo ip netns exec app sudo iptables -t nat -A POSTROUTING -j MASQUERADE"
+
+
+#************************************************
+# Cool down and test
+#************************************************
 sleep 20
 #ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/"

@@ -490,7 +490,6 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP1"
               },
               "matches": {
-                "destination-ipv4-network": "192.168.2.0/24",
                 "source-ipv4-network": "192.168.2.0/25",
                 "protocol": "1",
                 "source-port-range": {
@@ -507,7 +506,6 @@ def get_service_function_acl_data():
                 "service-function-acl:rendered-service-path": "RSP1"
               },
               "matches": {
-                "destination-ipv4-network": "192.168.2.0/24",
                 "source-ipv4-network": "192.168.2.0/25",
                 "protocol": "6",
                 "source-port-range": {
@@ -515,6 +513,38 @@ def get_service_function_acl_data():
                 },
                 "destination-port-range": {
                     "lower-port": 80
+                }
+              }
+            },
+            {
+              "rule-name": "ACE13",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP1"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.0/25",
+                "protocol": "17",
+                "source-port-range": {
+                    "lower-port": 0
+                },
+                "destination-port-range": {
+                    "lower-port": 0
+                }
+              }
+            },
+            {
+              "rule-name": "ACE14",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP1"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.0/25",
+                "protocol": "3",
+                "source-port-range": {
+                    "lower-port": 0
+                },
+                "destination-port-range": {
+                    "lower-port": 0
                 }
               }
             }
@@ -533,7 +563,6 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
-                "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "1",
                 "source-port-range": {
                     "lower-port": "0"
@@ -550,10 +579,41 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
-                "source-ipv4-network": "192.168.2.0/24",
                 "protocol": "6",
                 "source-port-range": {
                     "lower-port": 80
+                },
+                "destination-port-range": {
+                    "lower-port": 0
+                }
+              }
+            },
+            {
+              "rule-name": "ACE23",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP1-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "protocol": "17",
+                "source-port-range": {
+                    "lower-port": 0
+                },
+                "destination-port-range": {
+                    "lower-port": 0
+                }
+              }
+            },
+            {
+              "rule-name": "ACE24",
+              "actions": {
+                "service-function-acl:rendered-service-path": "RSP1-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "protocol": "3",
+                "source-port-range": {
+                    "lower-port": 0
                 },
                 "destination-port-range": {
                     "lower-port": 0

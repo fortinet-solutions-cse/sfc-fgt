@@ -421,6 +421,13 @@ config firewall policy
     next
 end
 
+config router static
+  edit 1
+    set gateway 192.168.122.1
+    set device "port1"
+  next
+end
+
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF2_NAME}-cidata.iso cfg-drv-fgt
@@ -480,6 +487,13 @@ config firewall policy
     next
 end
 
+config router static
+  edit 1
+    set gateway 192.168.122.1
+    set device "port1"
+  next
+end
+
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF3_NAME}-cidata.iso cfg-drv-fgt2
@@ -537,6 +551,13 @@ config firewall policy
         set service "ALL"
         set logtraffic disable
     next
+end
+
+config router static
+  edit 1
+    set gateway 192.168.122.1
+    set device "port1"
+  next
 end
 
 EOF
@@ -668,13 +689,7 @@ xterm -geometry 80x30+1180+450 -bg grey -fg black -title "User 3 shell" -e ssh -
 #************************************************
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo bash -c 'sudo echo nameserver 8.8.8.8 > /etc/resolv.conf'"
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app sudo ip route add default dev veth-app via 192.168.2.2;" \
-"sudo ip netns exec app sudo arp -s 216.58.201.131 00:00:22:22:22:22 -i veth-app;" \
-"sudo ip netns exec app sudo arp -s 216.58.201.132 00:00:22:22:22:22 -i veth-app;" \
-"sudo ip netns exec app sudo arp -s 157.240.2.35 00:00:22:22:22:22 -i veth-app;" \
-"sudo ip netns exec app sudo arp -s 157.240.2.35 00:00:22:22:22:22 -i veth-app;" \
-"sudo ip netns exec app sudo arp -s 31.13.83.36 00:00:22:22:22:22 -i veth-app;" \
-"sudo ip netns exec app sudo arp -s 8.8.8.8 00:00:22:22:22:22 -i veth-app;"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app sudo ip route add default dev veth-app via 192.168.2.2;"
 
 virsh attach-interface --domain classifier2 --type network \
         --source virbr1 \
@@ -692,10 +707,10 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP
 # Cool down and test
 #************************************************
 sleep 20
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app ping -c 5 192.168.2.2"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/"
 
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 ping -c 5 192.168.2.2"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 ping -c 5 192.168.2.2"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 wget -t1 http://192.168.2.2/"
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/openvswitch-pki_2.6.1-1_all.deb"

@@ -600,7 +600,7 @@ virsh attach-interface --domain ${SF4_PROXY_NAME} --type network \
         --mac ${SF4_PROXY_MAC2} --config --live
 
 virsh attach-interface --domain ${SF4_PROXY_NAME} --type network \
-        --source virbr6 \
+        --source virbr7 \
         --mac ${SF4_PROXY_MAC3} --config --live
 
 #************************************************
@@ -658,7 +658,7 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SFF2_IP} "sudo
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER2_IP} "sudo /vagrant/ovs/setup_classifier_ovs_mwc.sh" &
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf2proxy.log" &
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf3proxy.log" &
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf3proxy.log" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf4proxy.log" &
 
 #************************************************
 # Configure OpenDayLight server
@@ -690,6 +690,8 @@ xterm -geometry 80x30+1180+450 -bg grey -fg black -title "User 3 shell" -e ssh -
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo bash -c 'sudo echo nameserver 8.8.8.8 > /etc/resolv.conf'"
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app sudo ip route add default dev veth-app via 192.168.2.2;"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 sudo ip route add default dev veth-app2 via 192.168.2.2;"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app3 sudo ip route add default dev veth-app3 via 192.168.2.2;"
 
 virsh attach-interface --domain classifier2 --type network \
         --source virbr1 \

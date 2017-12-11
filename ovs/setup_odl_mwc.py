@@ -507,13 +507,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.0/25",
-                "protocol": "6",
-                "source-port-range": {
-                    "lower-port": 0
-                },
-                "destination-port-range": {
-                    "lower-port": 80
-                }
+                "protocol": "6"
               }
             },
             {
@@ -523,14 +517,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.0/25",
-                "protocol": "17",
-                "source-port-range": {
-                    "lower-port": 0
-                },
-                "destination-port-range": {
-                    "lower-port": 0
-                }
-              }
+                "protocol": "17"              }
             },
             {
               "rule-name": "ACE14",
@@ -563,13 +550,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
-                "protocol": "1",
-                "source-port-range": {
-                    "lower-port": "0"
-                },
-                "destination-port-range": {
-                    "lower-port": "0"
-                }
+                "protocol": "1"
               }
             },
             {
@@ -579,13 +560,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
-                "protocol": "6",
-                "source-port-range": {
-                    "lower-port": 80
-                },
-                "destination-port-range": {
-                    "lower-port": 0
-                }
+                "protocol": "6"
               }
             },
             {
@@ -595,13 +570,7 @@ def get_service_function_acl_data():
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
-                "protocol": "17",
-                "source-port-range": {
-                    "lower-port": 0
-                },
-                "destination-port-range": {
-                    "lower-port": 0
-                }
+                "protocol": "17"
               }
             },
             {

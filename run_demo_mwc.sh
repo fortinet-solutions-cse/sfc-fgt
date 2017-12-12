@@ -24,7 +24,38 @@
 # magonzalez(at)fortinet.com
 #
 # Took ideas from opendaylight/sfc project
-#************************************************
+#
+#*******************************************************
+#
+#         +-------+  +------+  +-------+  +--------+
+#         |Generic|  | Fire |  | Anti  |  |  Web   |
+#         |S.Func.|  | Wall |  | Virus |  | Filter |
+#         +-------+  +------+  +-------+  +--------+
+#
+#                      +---+     +---+      +---+
+#                      |   |     |   |      |   |
+# User1  +-------------+   +-----+   +------+   +----+
+#
+#                      +---+     +---+
+#                      |   |     |   |
+# User2  +-------------+   +-----+   +---------------+
+#
+#           +---+      +---+
+#           |   |      |   |
+# User3  +--+   +------+   +-------------------------+
+#
+# - Firewall blocks mails apps and webs. Test with 'wm'
+#
+# - Antivirus blocks virus and malware. Test with 'wv'
+#
+# - WebFilter blocks websites: Facebook. Test with 'wf'
+#
+# - Generic Service Function just replies with no action.
+#
+# Test generic web access with 'wg'
+#
+#*******************************************************
+
 set -x
 
 source env.sh
@@ -279,8 +310,6 @@ do
     OK=0
     result=$(curl -H "Content-Type: application/json" -H "Cache-Control: no-cache" -X GET --user admin:admin http://${LOCALHOST}:8181/restconf/operational/network-topology:network-topology/)
     OK=$((OK+$?))
-#    result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcOfRenderer")
-#    OK=$((OK+$?))
     result=$(sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST} display | grep "successfully started the SfcScfOfRenderer")
     OK=$((OK+$?))
     if [ $OK -eq 0 ] ; then
@@ -398,15 +427,25 @@ EOF
 
 cat >cfg-drv-fgt/openstack/latest/user_data <<EOF
 config system interface
-edit "port1"
-set ip ${SF2_IP_ADMIN}/24
-next
+  edit "port1"
+    set ip ${SF2_IP_ADMIN}/24
+  next
+  edit "port2"
+    set mtu-override enable
+    set mtu 1400
+  next
+  edit "port3"
+    set mtu-override enable
+    set mtu 1400
+  next
 end
+
 config system virtual-wire-pair
     edit "vwp1"
         set member "port2" "port3"
     next
 end
+
 config firewall policy
     edit 1
         set name "vwp1-policy"
@@ -418,6 +457,11 @@ config firewall policy
         set schedule "always"
         set service "ALL"
         set logtraffic disable
+        # Enable application control
+        set utm-status enable
+        set application-list "default"
+        set profile-protocol-options "default"
+        set ssl-ssh-profile "certificate-inspection"
     next
 end
 
@@ -427,6 +471,23 @@ config router static
     set device "port1"
   next
 end
+
+# Application control: blocks email
+config application list
+  edit "default"
+    config entries
+      delete 1
+      edit 1
+        set category 21
+      next
+      delete 2
+      edit 2
+        set action pass
+      next
+    end
+  next
+end
+
 
 EOF
 
@@ -484,6 +545,12 @@ config firewall policy
         set schedule "always"
         set service "ALL"
         set logtraffic disable
+
+        # Enable antivirus
+        set utm-status enable
+        set av-profile "default"
+        set profile-protocol-options "default"
+        set ssl-ssh-profile "certificate-inspection"
     next
 end
 
@@ -550,6 +617,11 @@ config firewall policy
         set schedule "always"
         set service "ALL"
         set logtraffic disable
+        # Enable webfilter
+        set utm-status enable
+        set webfilter-profile "default"
+        set profile-protocol-options "default"
+        set ssl-ssh-profile "certificate-inspection"
     next
 end
 
@@ -557,6 +629,32 @@ config router static
   edit 1
     set gateway 192.168.122.1
     set device "port1"
+  next
+end
+
+#Block facebook urls
+config webfilter urlfilter
+    edit 1
+        set name "default"
+        config entries
+            edit 1
+                set url "facebook.com"
+                set type wildcard
+                set action block
+            next
+        end
+    next
+end
+
+config webfilter profile
+  edit "default"
+    set inspection-mode flow-based
+    config web
+      set urlfilter-table 1
+    end
+    config ftgd-wf
+      unset options
+    end
   next
 end
 
@@ -672,15 +770,16 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} 
 xterm -geometry 55x30+20+20 -bg lightblue -fg black -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
 
 xterm -geometry 55x30+400+20 -bg darkblue -title "SF2PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
-
 xterm -geometry 55x30+780+20 -bg darkblue -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
-
 xterm -geometry 55x30+1160+20 -bg darkblue -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
 
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T15 -t1 http://www.google.com\' >>~/.bashrc;
+ echo alias wf=\'wget -T15 -t1 http://www.facebook.com\' >>~/.bashrc;
+ echo alias wv=\'wget -T15 -t1 http://metal.fortiguard.com/generated/eicar.com\' >>~/.bashrc;
+ echo alias wm=\'wget -T15 -t1 http://gmail.com\' >>~/.bashrc"
+
 xterm -geometry 80x30+20+450 -bg grey -fg black -title "User 1 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app bash" &
-
 xterm -geometry 80x30+600+450 -bg grey -fg black -title "User 2 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 bash" &
-
 xterm -geometry 80x30+1180+450 -bg grey -fg black -title "User 3 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app3 bash" &
 
 #************************************************
@@ -719,7 +818,8 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 wget -t1 http://192.168.2.2/openvswitch-pki_2.6.1-1_all.deb"
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app wget -t1 http://192.168.2.2/openvswitch-common_2.6.1-1_amd64.deb"
-
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 wget -t1 http://192.168.2.2/openvswitch-common_2.6.1-1_amd64.deb"
 
 exit 0
+
+

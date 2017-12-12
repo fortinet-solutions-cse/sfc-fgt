@@ -373,6 +373,10 @@ def get_service_function_chains_data():
                     {
                         "name": "firewall-abstract2",
                         "type": "firewall2"
+                    },
+                    {
+                        "name": "firewall-abstract3",
+                        "type": "firewall3"
                     }
                 ]
             },

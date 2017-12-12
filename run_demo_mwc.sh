@@ -92,7 +92,7 @@ rm -rf karaf-0.7.0/
 tar xvfz karaf-0.7.0.tar.gz
 cp karaf karaf-0.7.0/
 
-xterm -geometry 110x25+650+300 -e "cd ${PWD}/karaf-0.7.0/ && ./karaf" &
+xterm -geometry 110x25+650+255 -e "cd ${PWD}/karaf-0.7.0/ && ./karaf" &
 sleep 5
 
 #************************************************
@@ -146,7 +146,7 @@ fi
 #************************************************
 # Set virtual networks with virsh
 #************************************************
-xterm -geometry 70x25+1400+40 -fg yellow -e watch virsh net-list --all &
+xterm -geometry 70x14+1450+24 -fg yellow -e watch virsh net-list --all &
 
 cat >virbr1 <<EOF
 <network>
@@ -236,7 +236,7 @@ sudo virsh net-create virbr7
 # Prepare Cloud Init for first VM
 #************************************************
 
-xterm -geometry 70x25+1400+550 -fg yellow -e watch virsh list --all &
+xterm -geometry 70x16+1450+250 -fg yellow -e watch virsh list --all &
 
 cat >meta-data <<EOF
 instance-id: ${CLASSIFIER1_NAME}
@@ -653,7 +653,7 @@ config webfilter profile
       set urlfilter-table 1
     end
     config ftgd-wf
-      unset options
+      set options ftgd-disable
     end
   next
 end
@@ -767,20 +767,21 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} 
 #************************************************
 # Demo: Run ICMP and HTTP traffic
 #************************************************
-xterm -geometry 55x30+20+20 -bg lightblue -fg black -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
+xterm -geometry 55x30+20+20 -bg darkblue -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
+xterm -geometry 55x30+370+20 -bg darkblue -title "SF2PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 55x30+720+20 -bg darkblue -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 55x30+1070+20 -bg darkblue -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
 
-xterm -geometry 55x30+400+20 -bg darkblue -title "SF2PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
-xterm -geometry 55x30+780+20 -bg darkblue -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
-xterm -geometry 55x30+1160+20 -bg darkblue -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T7 -t1 http://www.google.com\' >>~/.bashrc;
+ echo alias wf=\'wget -T7 -t1 http://www.facebook.com\' >>~/.bashrc;
+ echo alias wv=\'wget -T7 -t1 http://metal.fortiguard.com/generated/eicar.com\' >>~/.bashrc;
+ echo alias wm=\'wget -T7 -t1 http://gmail.com\' >>~/.bashrc"
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T15 -t1 http://www.google.com\' >>~/.bashrc;
- echo alias wf=\'wget -T15 -t1 http://www.facebook.com\' >>~/.bashrc;
- echo alias wv=\'wget -T15 -t1 http://metal.fortiguard.com/generated/eicar.com\' >>~/.bashrc;
- echo alias wm=\'wget -T15 -t1 http://gmail.com\' >>~/.bashrc"
+xterm -geometry 80x30+20+540 -bg grey -fg black -title "User 1 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app bash" &
+xterm -geometry 80x30+525+540 -bg grey -fg black -title "User 2 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 bash" &
+xterm -geometry 80x30+1030+540 -bg grey -fg black -title "User 3 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app3 bash" &
+xterm -geometry 60x31+1535+505 -bg lightgreen -fg black -title "Schema" -e 'head -n57 ./run_demo_mwc.sh;bash' &
 
-xterm -geometry 80x30+20+450 -bg grey -fg black -title "User 1 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app bash" &
-xterm -geometry 80x30+600+450 -bg grey -fg black -title "User 2 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 bash" &
-xterm -geometry 80x30+1180+450 -bg grey -fg black -title "User 3 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app3 bash" &
 
 #************************************************
 # Support inet traffic in the chains.

@@ -7,9 +7,9 @@ set -x
 
 # Install networking-sfc cli
 
-pip freeze > previous_pip.txt
-virtualenv nwsfc
-. nwsfc/bin/activate
+#pip freeze > previous_pip.txt
+#virtualenv nwsfc
+#. nwsfc/bin/activate
 pip install networking-sfc
 
 cat > /etc/protocol <<EOF
@@ -37,7 +37,7 @@ openstack security group rule create --proto udp --dst-port 1:65535  --egress de
 
 iptables -F
 iptables -F -t nat
-iptables -P FORWARD -j ACCEPT
+iptables -P FORWARD ACCEPT   ######
 iptables -A POSTROUTING -t nat -j MASQUERADE
 
 #Note interface has to be set to promiscuous mode to allow inet traffic in the vms
@@ -52,6 +52,12 @@ openstack router show router-ext||openstack router create router-ext
 openstack router add subnet router-ext mgmt_subnet
 openstack router set --external-gateway ext-net router-ext
 
+# Create keypair
+
+openstack --insecure keypair create  t1 >t1.pem
+chmod 600 t1.pem
+openstack keypair show t1 --public-key>t1.pub
+
 # Get images
 
 wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
@@ -59,10 +65,8 @@ sudo apt install -y libguestfs-tools
 
 sudo virt-sysprep -a trusty-server-cloudimg-amd64-disk1.img --root-password password:m \
     --delete /var/lib/cloud/* \
-    --firstboot-command 'useradd -m -p "" m ; chage -d 0 m; ssh-keygen -A; rm -rf /var/lib/cloud/*;sed -i "s/PermitRootLogin .*/PermitRootLogin yes/" /etc/ssh/sshd_config; sed -i "s/PasswordAuthentication .*/PasswordAuthentication yes/" /etc/ssh/sshd_config;sed -i "s/nameserver .*/nameserver 8.8.8.8/" /etc/resolv.conf;"
-'
-
-add "sed" for ssh configuration: root login and password login
+    --ssh-inject root:file:./t1.pub \
+    --firstboot-command 'useradd -m -p "" m ; chage -d 0 m; ssh-keygen -A; rm -rf /var/lib/cloud/*;sed -i "s/PermitRootLogin .*/PermitRootLogin yes/" /etc/ssh/sshd_config; sed -i "s/PasswordAuthentication .*/PasswordAuthentication yes/" /etc/ssh/sshd_config;sed -i "s/nameserver .*/nameserver 8.8.8.8/" /etc/resolv.conf; service ssh restart'
 
 openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
 
@@ -108,8 +112,7 @@ openstack --insecure flavor create --ram 1024 --disk 3 --vcpus 1 --ephemeral 5 m
 openstack --insecure floating ip create --floating-ip-address $floatIpClient ext-net
 openstack --insecure floating ip create --floating-ip-address $floatIpServer ext-net
 
-openstack --insecure keypair create  t1 >t1.pem
-chmod 600 t1.pem
+
 
 openstack --insecure port create --network netM --fixed-ip ip-address=192.168.7.40 pClientM
 openstack --insecure port create --network netServerM --fixed-ip ip-address=192.168.7.41 pServerM
@@ -138,12 +141,12 @@ done
 
 sshopts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
-retries=40
+retries=420
 while [ $retries -gt 0 ]
 do
-  ssh $sshopts -i t1.pem ubuntu@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
+  ssh $sshopts -i t1.pem root@$floatIpClient "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result1=$?
-  ssh $sshopts -i t1.pem ubuntu@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
+  ssh $sshopts -i t1.pem root@$floatIpServer "ifconfig; sudo dhclient; sleep 2; ifconfig; sudo ethtool -K eth1 tx off;"
   result2=$?
   if [ $result1 -eq 0 ] && [ $result2 -eq 0 ] ; then
      break
@@ -165,7 +168,7 @@ openstack security group rule create --proto udp --dst-port 1:65535  --egress de
 
 
 
-ssh $sshopts -i t1.pem ubuntu@$floatIpClient "sudo apt update; sudo apt install -y openvswitch-switch;" \
+ssh $sshopts -i t1.pem root@$floatIpClient "sudo sed -i \"s/nameserver .*/nameserver 8.8.8.8/\" /etc/resolv.conf; sudo apt update; sudo apt install -y openvswitch-switch;" \
  "sudo ovs-vsctl add-br br-sfc -- set bridge br-sfc protocols=OpenFlow10,OpenFlow12,OpenFlow13;" \
  "sudo ovs-vsctl add-port br-sfc eth1"
 

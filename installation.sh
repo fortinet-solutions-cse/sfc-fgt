@@ -3,7 +3,7 @@
 
 sudo apt-get install -y  openjdk-8-jdk
 sudo apt-get install -y qemu-kvm libvirt-bin libguestfs-tools virtinst
-sudo apt-get install -y sshpass wget curl openssh-client
+sudo apt-get install -y sshpass wget curl openssh-client xterm
 
 #Manual
 #Generate public key in default dir (~/.ssh/id_rsa.pub)

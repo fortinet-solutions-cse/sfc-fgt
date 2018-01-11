@@ -106,7 +106,8 @@ sleep 5
 #************************************************
 
 rm -f proxy.py
-wget https://raw.githubusercontent.com/fortinet-tigers/sfc-proxy/master/proxy.py
+#wget https://raw.githubusercontent.com/fortinet-tigers/sfc-proxy/master/proxy.py
+cp ~/PycharmProjects/sfc-proxy/proxy.py
 chmod 777 proxy.py
 
 #************************************************
@@ -133,7 +134,7 @@ else
     if [ ! -e ${UBUNTU_IMAGE_NAME} ]; then
 
        wget ${UBUNTU_IMAGE_URL}
-       qemu-img resize ${UBUNTU_IMAGE_NAME} +1Gb
+       qemu-img resize ${UBUNTU_IMAGE_NAME} +1G
        if [ $? -ne 0 ] ; then
           echo "Failed to resize ubuntu base image. Exiting..."
           exit -1

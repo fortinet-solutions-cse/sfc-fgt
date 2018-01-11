@@ -106,8 +106,7 @@ sleep 5
 #************************************************
 
 rm -f proxy.py
-#wget https://raw.githubusercontent.com/fortinet-tigers/sfc-proxy/master/proxy.py
-cp ~/PycharmProjects/sfc-proxy/proxy.py
+wget https://raw.githubusercontent.com/fortinet-tigers/sfc-proxy/master/proxy.py
 chmod 777 proxy.py
 
 #************************************************

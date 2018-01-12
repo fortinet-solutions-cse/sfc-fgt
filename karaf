@@ -4,4 +4,4 @@ set -x
 sleep 1
 rm -rf data/ snapshots/ journal/ instances/ karaf.pid lock
 sed -iold "s/featuresBoot = \\\/featuresBoot = odl-sfc-scf-openflow,odl-sfc-openflow-renderer,odl-sfc-ui \\\/" etc/org.apache.karaf.features.cfg
-./bin/karaf
+./bin/start

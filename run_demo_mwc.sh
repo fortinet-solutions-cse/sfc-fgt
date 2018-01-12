@@ -91,8 +91,9 @@ fi
 rm -rf karaf-0.7.0/
 tar xvfz karaf-0.7.0.tar.gz
 cp karaf karaf-0.7.0/
+cd ${PWD}/karaf-0.7.0/ && ./karaf
+cd ..
 
-xterm -geometry 110x25+650+255 -e "cd ${PWD}/karaf-0.7.0/ && ./karaf" &
 sleep 5
 
 #************************************************
@@ -324,6 +325,8 @@ if [ $retries -eq 0 ] ; then
     echo "features are not started correctly: ${features}"
     exit -1
 fi
+
+xterm -geometry 110x25+650+255 -e "sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST}" &
 
 #************************************************
 # Stop first VM (prior to clone image)

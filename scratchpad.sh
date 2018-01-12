@@ -276,7 +276,7 @@ NEUTRON_DNS=$NEUTRON_EXT_NET_GW
 NEUTRON_FLOAT_RANGE_START="10.10.10.12"
 NEUTRON_FLOAT_RANGE_END="10.10.10.253"
 
-NEUTRON_FIXED_NET_CIDR="192.168.16.0/22"
+NEUTRON_FIXED_NET_CIDR="192.168.16.0/24"
 
 # Determine the tenant id for the configured tenant name.
 export TENANT_ID="$(openstack project list | grep $OS_TENANT_NAME | awk '{ print $2 }')"
@@ -691,12 +691,18 @@ USR=magonzalez
 IP=10.210.9.103
 USR=fortinet
 
+IP=192.168.122.2
+USR=root
+
 rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/*                       ${USR}@${IP}:/home/${USR}
 
 rsync --progress ~/Downloads/fortios/*.qcow2                                 ${USR}@${IP}:/home/${USR}/cloud-images
+rsync --progress ~/Downloads/fortios/*.qcow2                                 root@${IP}:/root/cloud-images
 rsync --progress ~/Downloads/fortitester/*.qcow2                             ${USR}@${IP}:/home/${USR}/cloud-images
 rsync --progress ~/Downloads/mac-vwp-fortios/mac-vwp-fortios.qcow2           ${USR}@${IP}:/home/${USR}/cloud-images
 rsync --progress ~/Downloads/fortios/*.qcow2 ~/Downloads/fortitester/*.qcow2 ${USR}@${IP}:/home/${USR}/cloud-images
+
+sshuttle -r 10.210.8.17 192.168.122.0/24
 
 openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack security group delete []
 

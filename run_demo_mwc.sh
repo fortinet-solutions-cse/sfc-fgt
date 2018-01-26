@@ -54,6 +54,9 @@
 #
 # Test generic web access with 'wg'
 #
+# Fortigates are in subnet: 192.168.122.0/24 (.32,.33 & .34)
+# ODL gui is in: 127.0.0.1:8181/index.html
+#
 #*******************************************************
 
 set -x

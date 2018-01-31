@@ -76,6 +76,6 @@ openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create
 wget http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
 openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Xenial x86_64"  --file  xenial-server-cloudimg-amd64-disk1.img
 wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-openstack image show  "Centos 7 x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Centos 7 x86_64"  --file  $folder/CentOS-7-x86_64-GenericCloud.qcow2
+openstack image show  "Centos 7 x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Centos 7 x86_64"  --file  CentOS-7-x86_64-GenericCloud.qcow2
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Cirros 0.3.4"  --file  $folder/cirros-0.3.4-x86_64-disk.img
+openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Cirros 0.3.4"  --file  cirros-0.3.4-x86_64-disk.img

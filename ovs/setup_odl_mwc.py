@@ -83,28 +83,28 @@ def get_service_nodes_data():
             {
                 "name": "sf1",
                 "service-function": [
-                    "dpi-1"
+                    "dpi"
                 ],
                 "ip-mgmt-address": SF1_IP
             },
             {
                 "name": "sf2",
                 "service-function": [
-                    "firewall-2"
+                    "firewall"
                 ],
                 "ip-mgmt-address": SF2_IP
             },
             {
                 "name": "sf3",
                 "service-function": [
-                    "firewall-3"
+                    "antivirus"
                 ],
                 "ip-mgmt-address": SF3_IP
             },
             {
                 "name": "sf4",
                 "service-function": [
-                    "firewall-4"
+                    "webfilter"
                 ],
                 "ip-mgmt-address": SF4_IP
             },
@@ -132,12 +132,12 @@ def get_service_functions_data():
     "service-functions": {
         "service-function": [
             {
-                "name": "dpi-1",
+                "name": "dpi",
                 "ip-mgmt-address": SF1_IP,
                 "type": "dpi",
                 "sf-data-plane-locator": [
                     {
-                        "name": "dpi-1-dpl",
+                        "name": "dpi-dpl",
                         "port": 4790,
                         "ip": SF1_IP,
                         "transport": "service-locator:vxlan-gpe",
@@ -146,12 +146,12 @@ def get_service_functions_data():
                 ]
             },
             {
-                "name": "firewall-2",
+                "name": "firewall",
                 "ip-mgmt-address": SF2_IP,
-                "type": "firewall2",
+                "type": "firewall",
                 "sf-data-plane-locator": [
                     {
-                        "name": "firewall-2-dpl",
+                        "name": "firewall-dpl",
                         "port": 4789,
                         "ip": SF2_IP,
                         "transport": "service-locator:vxlan",
@@ -165,12 +165,12 @@ def get_service_functions_data():
                 ]
             },
             {
-                "name": "firewall-3",
+                "name": "antivirus",
                 "ip-mgmt-address": SF3_IP,
-                "type": "firewall3",
+                "type": "antivirus",
                 "sf-data-plane-locator": [
                     {
-                        "name": "firewall-3-dpl",
+                        "name": "antivirus-dpl",
                         "port": 4789,
                         "ip": SF3_IP,
                         "transport": "service-locator:vxlan",
@@ -184,12 +184,12 @@ def get_service_functions_data():
                 ]
             },
             {
-                "name": "firewall-4",
+                "name": "webfilter",
                 "ip-mgmt-address": SF4_IP,
-                "type": "firewall4",
+                "type": "webfilter",
                 "sf-data-plane-locator": [
                     {
-                        "name": "firewall-4-dpl",
+                        "name": "webfilter-dpl",
                         "port": 4789,
                         "ip": SF4_IP,
                         "transport": "service-locator:vxlan",
@@ -261,16 +261,16 @@ def get_service_function_forwarders_data():
                 ],
                 "service-function-dictionary": [
                     {
-                        "name": "dpi-1",
+                        "name": "dpi",
                         "sff-sf-data-plane-locator": {
-                             "sf-dpl-name": "dpi-1-dpl",
+                             "sf-dpl-name": "dpi-dpl",
                              "sff-dpl-name": "sff1-dpl"
                         }
                     },
                     {
-                        "name": "firewall-2",
+                        "name": "firewall",
                         "sff-sf-data-plane-locator": {
-                            "sf-dpl-name": "firewall-2-dpl",
+                            "sf-dpl-name": "firewall-dpl",
                             "sff-dpl-name": "sff1-dpl"
                         }
                     }
@@ -300,16 +300,16 @@ def get_service_function_forwarders_data():
                 ],
                 "service-function-dictionary": [
                     {
-                        "name": "firewall-3",
+                        "name": "antivirus",
                         "sff-sf-data-plane-locator": {
-                            "sf-dpl-name": "firewall-3-dpl",
+                            "sf-dpl-name": "antivirus-dpl",
                             "sff-dpl-name": "sff2-dpl"
                         }
                     },
                     {
-                        "name": "firewall-4",
+                        "name": "webfilter",
                         "sff-sf-data-plane-locator": {
-                            "sf-dpl-name": "firewall-4-dpl",
+                            "sf-dpl-name": "webfilter-dpl",
                             "sff-dpl-name": "sff2-dpl"
                         }
                     }
@@ -350,46 +350,46 @@ def get_service_function_chains_data():
     "service-function-chains": {
         "service-function-chain": [
             {
-                "name": "SFC1",
+                "name": "UTM-SFC",
                 "sfc-service-function": [
                     {
-                        "name": "firewall-abstract2",
-                        "type": "firewall2"
+                        "name": "firewall-sf",
+                        "type": "firewall"
                     },
                     {
-                        "name": "firewall-abstract3",
-                        "type": "firewall3"
+                        "name": "antivirus-sf",
+                        "type": "antivirus"
                     },
                     {
-                        "name": "firewall-abstract4",
-                        "type": "firewall4"
+                        "name": "webfilter-sf",
+                        "type": "webfilter"
                     }
 
                 ]
             },
             {
-                "name": "SFC2",
+                "name": "FWAV-SFC",
                 "sfc-service-function": [
                     {
-                        "name": "firewall-abstract2",
-                        "type": "firewall2"
+                        "name": "firewall-sf",
+                        "type": "firewall"
                     },
                     {
-                        "name": "firewall-abstract3",
-                        "type": "firewall3"
+                        "name": "antivirus-sf",
+                        "type": "antivirus"
                     }
                 ]
             },
             {
-                "name": "SFC3",
+                "name": "FW-SFC",
                 "sfc-service-function": [
                     {
-                        "name": "dpi-abstract1",
+                        "name": "dpi-sf",
                         "type": "dpi"
                     },
                     {
-                        "name": "firewall-abstract2",
-                        "type": "firewall2"
+                        "name": "firewall-sf",
+                        "type": "firewall"
                     }
                 ]
             }
@@ -406,22 +406,22 @@ def get_service_function_paths_data():
     "service-function-paths": {
         "service-function-path": [
             {
-                "name": "SFP1",
-                "service-chain-name": "SFC1",
+                "name": "UTM-SFP",
+                "service-chain-name": "UTM-SFC",
                 "starting-index": 255,
                 "symmetric": "true",
                 "context-metadata": "NSH1"
             },
             {
-                "name": "SFP2",
-                "service-chain-name": "SFC2",
+                "name": "FWAV-SFP",
+                "service-chain-name": "FWAV-SFC",
                 "starting-index": 255,
                 "symmetric": "true",
                 "context-metadata": "NSH1"
             },
             {
-                "name": "SFP3",
-                "service-chain-name": "SFC3",
+                "name": "FW-SFP",
+                "service-chain-name": "FW-SFC",
                 "starting-index": 255,
                 "symmetric": "true",
                 "context-metadata": "NSH1"
@@ -455,24 +455,24 @@ def get_rendered_service_path_uri():
 def get_rendered_service_path_data():
     return {
     "input": {
-        "name": "RSP1",
-        "parent-service-function-path": "SFP1",
+        "name": "UTM-RSP",
+        "parent-service-function-path": "UTM-SFP",
     }
 }
 
 def get_rendered_service_path_data2():
     return {
     "input": {
-        "name": "RSP2",
-        "parent-service-function-path": "SFP2",
+        "name": "FWAV-RSP",
+        "parent-service-function-path": "FWAV-SFP",
     }
 }
 
 def get_rendered_service_path_data3():
     return {
     "input": {
-        "name": "RSP3",
-        "parent-service-function-path": "SFP3",
+        "name": "FW-RSP",
+        "parent-service-function-path": "FW-SFP",
     }
 }
 
@@ -491,7 +491,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE11",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1"
+                "service-function-acl:rendered-service-path": "UTM-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.0/25",
@@ -501,7 +501,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE12",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1"
+                "service-function-acl:rendered-service-path": "UTM-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.0/25",
@@ -511,7 +511,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE13",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1"
+                "service-function-acl:rendered-service-path": "UTM-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.0/25",
@@ -529,7 +529,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE21",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1-Reverse"
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
@@ -539,7 +539,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE22",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1-Reverse"
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
@@ -549,7 +549,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE23",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP1-Reverse"
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.0/25",
@@ -567,7 +567,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE31",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2"
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.129/32",
@@ -577,7 +577,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE32",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2"
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.129/32",
@@ -587,7 +587,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE33",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2"
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.2.129/32",
@@ -605,7 +605,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE41",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2-Reverse"
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.129/32",
@@ -615,7 +615,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE42",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2-Reverse"
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.129/32",
@@ -625,7 +625,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE43",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP2-Reverse"
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.2.129/32",
@@ -643,7 +643,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE51",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3"
+                "service-function-acl:rendered-service-path": "FW-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.3.100/32",
@@ -653,7 +653,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE52",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3"
+                "service-function-acl:rendered-service-path": "FW-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.3.100/32",
@@ -663,7 +663,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE53",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3"
+                "service-function-acl:rendered-service-path": "FW-RSP"
               },
               "matches": {
                 "source-ipv4-network": "192.168.3.100/32",
@@ -681,7 +681,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE61",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3-Reverse"
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.3.100/32",
@@ -691,7 +691,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE62",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3-Reverse"
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.3.100/32",
@@ -701,7 +701,7 @@ def get_service_function_acl_data():
             {
               "rule-name": "ACE63",
               "actions": {
-                "service-function-acl:rendered-service-path": "RSP3-Reverse"
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
               },
               "matches": {
                 "destination-ipv4-network": "192.168.3.100/32",

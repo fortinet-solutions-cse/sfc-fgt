@@ -85,56 +85,56 @@ def get_service_function_chains_uri():
 
 def get_service_function_chains_data():
     return {
-        "service-function-chains": {
-            "service-function-chain": [
-                {
-                    "name": "SFC1",
-                    "sfc-service-function": [
-                        {
-                            "name": "firewall-abstract2",
-                            "type": "firewall2"
-                        },
-                        {
-                            "name": "firewall-abstract3",
-                            "type": "firewall3"
-                        },
-                        {
-                            "name": "firewall-abstract4",
-                            "type": "firewall4"
-                        }
+    "service-function-chains": {
+        "service-function-chain": [
+            {
+                "name": "UTM-SFC",
+                "sfc-service-function": [
+                    {
+                        "name": "firewall-sf",
+                        "type": "firewall"
+                    },
+                    {
+                        "name": "antivirus-sf",
+                        "type": "antivirus"
+                    },
+                    {
+                        "name": "webfilter-sf",
+                        "type": "webfilter"
+                    }
 
-                    ]
-                },
-                {
-                    "name": "SFC2",
-                    "sfc-service-function": [
-                        {
-                            "name": "firewall-abstract2",
-                            "type": "firewall2"
-                        },
-                        {
-                            "name": "firewall-abstract3",
-                            "type": "firewall3"
-                        }
-                    ]
-                },
-                {
-                    "name": "SFC3",
-                    "sfc-service-function": [
-                        {
-                            "name": "dpi-abstract1",
-                            "type": "dpi"
-                        },
-                        {
-                            "name": "firewall-abstract2",
-                            "type": "firewall2"
-                        },
-                        {
-                            "name": "firewall-abstract3",
-                            "type": "firewall3"
-                        }
-                    ]
-                }
+                ]
+            },
+            {
+                "name": "FWAV-SFC",
+                "sfc-service-function": [
+                    {
+                        "name": "firewall-sf",
+                        "type": "firewall"
+                    },
+                    {
+                        "name": "antivirus-sf",
+                        "type": "antivirus"
+                    }
+                ]
+            },
+            {
+                "name": "FW-SFC",
+                "sfc-service-function": [
+                    {
+                        "name": "dpi-sf",
+                        "type": "dpi"
+                    },
+                    {
+                        "name": "firewall-sf",
+                        "type": "firewall"
+                    },
+                    {
+                        "name": "antivirus-sf",
+                        "type": "antivirus"
+                    },
+                ]
+            }
 
             ]
         }
@@ -143,36 +143,35 @@ def get_service_function_chains_data():
 def get_service_function_paths_uri():
     return "/restconf/config/service-function-path:service-function-paths/"
 
-
 def get_service_function_paths_data():
     return {
-        "service-function-paths": {
-            "service-function-path": [
-                {
-                    "name": "SFP1",
-                    "service-chain-name": "SFC1",
-                    "starting-index": 255,
-                    "symmetric": "true",
-                    "context-metadata": "NSH1"
-                },
-                {
-                    "name": "SFP2",
-                    "service-chain-name": "SFC2",
-                    "starting-index": 255,
-                    "symmetric": "true",
-                    "context-metadata": "NSH1"
-                },
-                {
-                    "name": "SFP3",
-                    "service-chain-name": "SFC3",
-                    "starting-index": 255,
-                    "symmetric": "true",
-                    "context-metadata": "NSH1"
-                }
+    "service-function-paths": {
+        "service-function-path": [
+            {
+                "name": "UTM-SFP",
+                "service-chain-name": "UTM-SFC",
+                "starting-index": 255,
+                "symmetric": "true",
+                "context-metadata": "NSH1"
+            },
+            {
+                "name": "FWAV-SFP",
+                "service-chain-name": "FWAV-SFC",
+                "starting-index": 255,
+                "symmetric": "true",
+                "context-metadata": "NSH1"
+            },
+            {
+                "name": "FW-SFP",
+                "service-chain-name": "FW-SFC",
+                "starting-index": 255,
+                "symmetric": "true",
+                "context-metadata": "NSH1"
+            }
 
-            ]
-        }
+        ]
     }
+}
 
 
 def get_create_rendered_service_path_uri():
@@ -185,47 +184,46 @@ def get_delete_rendered_service_path_uri():
 
 def get_rendered_service_path_data():
     return {
-        "input": {
-            "name": "RSP1",
-            "parent-service-function-path": "SFP1",
-        }
+    "input": {
+        "name": "UTM-RSP",
+        "parent-service-function-path": "UTM-SFP",
     }
-
+}
 
 def get_rendered_service_path_data2():
     return {
-        "input": {
-            "name": "RSP2",
-            "parent-service-function-path": "SFP2",
-        }
+    "input": {
+        "name": "FWAV-RSP",
+        "parent-service-function-path": "FWAV-SFP",
     }
+}
 
 def get_rendered_service_path_data3():
     return {
-        "input": {
-            "name": "RSP3",
-            "parent-service-function-path": "SFP3",
-        }
+    "input": {
+        "name": "FW-RSP",
+        "parent-service-function-path": "FW-SFP",
     }
+}
 
 def get_rendered_service_path_data_for_delete():
     return {
         "input": {
-            "name": "RSP1"
+            "name": "UTM-RSP"
         }
     }
 
 def get_rendered_service_path_data2_for_delete():
     return {
         "input": {
-            "name": "RSP2"
+            "name": "FWAV-RSP"
         }
     }
 
 def get_rendered_service_path_data3_for_delete():
     return {
         "input": {
-            "name": "RSP3"
+            "name": "FW-RSP"
         }
     }
 
@@ -234,331 +232,329 @@ def get_service_function_acl_uri():
 
 
 def get_service_function_acl_data():
-    return {
-        "access-lists": {
-            "acl": [
-                {
-                    "acl-name": "ACL1",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE11",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE12",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE13",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "acl-name": "ACL2",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE21",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE22",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE23",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP1-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.0/25",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "acl-name": "ACL3",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE31",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE32",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE33",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "acl-name": "ACL4",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE41",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE42",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE43",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP2-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.2.129/32",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "acl-name": "ACL5",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE51",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE52",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE53",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3"
-                                },
-                                "matches": {
-                                    "source-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "acl-name": "ACL6",
-                    "acl-type": "ietf-access-control-list:ipv4-acl",
-                    "access-list-entries": {
-                        "ace": [
-                            {
-                                "rule-name": "ACE61",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "1"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE62",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "6"
-                                }
-                            },
-                            {
-                                "rule-name": "ACE63",
-                                "actions": {
-                                    "service-function-acl:rendered-service-path": "RSP3-Reverse"
-                                },
-                                "matches": {
-                                    "destination-ipv4-network": "192.168.3.100/32",
-                                    "protocol": "17"
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
+    return  {
+  "access-lists": {
+    "acl": [
+      {
+        "acl-name": "ACL1",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE11",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.0/25",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE12",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.0/25",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE13",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.0/25",
+                "protocol": "17"
+              }
+            }
+          ]
         }
-    }
-
+      },
+      {
+        "acl-name": "ACL2",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE21",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE22",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE23",
+              "actions": {
+                "service-function-acl:rendered-service-path": "UTM-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.0/25",
+                "protocol": "17"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL3",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE31",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.129/32",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE32",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.129/32",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE33",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.2.129/32",
+                "protocol": "17"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL4",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE41",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.129/32",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE42",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.129/32",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE43",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FWAV-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.2.129/32",
+                "protocol": "17"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL5",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE51",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.3.100/32",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE52",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.3.100/32",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE53",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP"
+              },
+              "matches": {
+                "source-ipv4-network": "192.168.3.100/32",
+                "protocol": "17"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "acl-name": "ACL6",
+        "acl-type": "ietf-access-control-list:ipv4-acl",
+        "access-list-entries": {
+          "ace": [
+            {
+              "rule-name": "ACE61",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.3.100/32",
+                "protocol": "1"
+              }
+            },
+            {
+              "rule-name": "ACE62",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.3.100/32",
+                "protocol": "6"
+              }
+            },
+            {
+              "rule-name": "ACE63",
+              "actions": {
+                "service-function-acl:rendered-service-path": "FW-RSP-Reverse"
+              },
+              "matches": {
+                "destination-ipv4-network": "192.168.3.100/32",
+                "protocol": "17"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
 
 def get_service_function_classifiers_uri():
     return "/restconf/config/service-function-classifier:service-function-classifiers/"
 
-
 def get_service_function_classifiers_data():
-    return {
-        "service-function-classifiers": {
-            "service-function-classifier": [
-                {
-                    "name": "Classifier1",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier1",
-                            "interface": "veth-br"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL1",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                },
-                {
-                    "name": "Classifier2",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier2",
-                            "interface": "veth-br"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL2",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                },
-                {
-                    "name": "Classifier1-2",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier1",
-                            "interface": "veth-br2"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL3",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                },
-                {
-                    "name": "Classifier2-2",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier2",
-                            "interface": "veth-br"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL4",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                },
-                {
-                    "name": "Classifier1-3",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier1",
-                            "interface": "veth-br3"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL5",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                },
-                {
-                    "name": "Classifier2-3",
-                    "scl-service-function-forwarder": [
-                        {
-                            "name": "Classifier2",
-                            "interface": "veth-br"
-                        }
-                    ],
-                    "acl": {
-                        "name": "ACL6",
-                        "type": "ietf-access-control-list:ipv4-acl"
-                    }
-                }
-            ]
-        }
-    }
+    return  {
+  "service-function-classifiers": {
+    "service-function-classifier": [
+      {
+        "name": "Classifier1",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier1",
+            "interface": "veth-br"
+          }
+        ],
+        "acl": {
+            "name": "ACL1",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier2",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier2",
+            "interface": "veth-br"
+          }
+        ],
+        "acl": {
+            "name": "ACL2",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier1-2",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier1",
+            "interface": "veth-br2"
+          }
+        ],
+        "acl": {
+            "name": "ACL3",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier2-2",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier2",
+            "interface": "veth-br"
+          }
+        ],
+        "acl": {
+            "name": "ACL4",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier1-3",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier1",
+            "interface": "veth-br3"
+          }
+        ],
+        "acl": {
+            "name": "ACL5",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      },
+      {
+        "name": "Classifier2-3",
+        "scl-service-function-forwarder": [
+          {
+            "name": "Classifier2",
+            "interface": "veth-br"
+          }
+        ],
+        "acl": {
+            "name": "ACL6",
+            "type": "ietf-access-control-list:ipv4-acl"
+         }
+      }
+    ]
+  }
+}
 
 
 if __name__ == "__main__":

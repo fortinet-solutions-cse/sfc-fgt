@@ -2,7 +2,7 @@
 
 . env.sh
 
-xterm -geometry 110x25+650+255 -e 'sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf 127.0.0.1' &
+xterm -geometry 110x25+650+255 -bg black -fg white -e 'sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf 127.0.0.1' &
 
 xterm -geometry 55x30+20+20 -bg darkblue -fg white -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
 xterm -geometry 55x30+370+20 -bg darkblue -fg white -title "SF2 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &

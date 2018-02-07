@@ -35,15 +35,15 @@
 #                      +---+     +---+      +---+
 #                      |   |     |   |      |   |
 # User1  +-------------+   +-----+   +------+   +----+
-#
+# (UTM)
 #                      +---+     +---+
 #                      |   |     |   |
 # User2  +-------------+   +-----+   +---------------+
-#
+# (FWAV)
 #           +---+      +---+
 #           |   |      |   |
 # User3  +--+   +------+   +-------------------------+
-#
+# (FW)
 # - Firewall blocks mails apps and webs. Test with 'wm'
 #
 # - Antivirus blocks virus and malware. Test with 'wv'

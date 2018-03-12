@@ -1,24 +1,7 @@
 
-sudo ../PycharmProjects/nsh-proxy/proxy.py --encap_if vnet5 --unencap_in_if vnet10 --unencap_out_if vnet9
-sudo /vagrant/proxy.py --encap_if eth0 --unencap_in_if eth2 --unencap_out_if eth1
-
-
-ssh admin@192.168.122.40
-
 #************************************************
 # Start Fake FW
 #************************************************
-virsh destroy sf2
-virsh undefine sf2
-
-virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF2_NAME} --ram 2024 --vcpus 1 --disk sf2.img,size=3 --disk ${SF2_NAME}-cidata.iso,device=cdrom --network bridge=virbr1,mac=${SF2_MAC}
-
-
-
-rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${SF2_PROXY_IP}:/vagrant/
-
-cp ../PycharmProjects/nsh-proxy/proxy.py .;rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" -r -v --max-size=1048576 ./*  ${SF2_PROXY_IP}:/vagrant/;ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "sudo nohup bash /vagrant/ovs/setup_sfc_proxy.sh 2>&1 >sf2proxy.log" &
-
 
 
 config system interface
@@ -159,68 +142,6 @@ Received Packet #79
    VxLAN/VxLAN-gpe VNI: 1, flags: 08, Next: 0
    NSH base nsp: 16777134, nsi: 101
    NSH context c1: 0x75cf3564, c2: 0x08060001, c3: 0x08000604, c4: 0x0001ae65
-                                                                                                 sf_ip = 8.0.6.4
-
-
-
-
-cat >test <<EOF
-<network>
-  <name>test</name>
-  <bridge name='test' stp='off' delay='0'/>
-  <mac address='52:54:00:79:34:17'/>
-  <ip address='192.168.90.1' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.168.90.2' end='192.168.90.254'/>
-      <host mac='00:22:33:44:55:10' name='tap1' ip='192.168.90.10'/>
-      <host mac='00:22:33:44:55:20' name='tap2' ip='192.168.90.20'/>
-    </dhcp>
-  </ip>
-</network>
-EOF
-
-sudo virsh net-create test
-
-
-sudo wireshark -i vnet9 &
-sudo wireshark -i vnet7 &
-sudo wireshark -i vnet8 &
-sudo wireshark -i vnet10 &
-
-
-sudo wireshark -i vnet5 &
-
-
-
-virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name sff2 --file sff2.img --mac=${SFF2_MAC}
-sudo virt-sysprep -a sff2.img --hostname sff2 --firstboot-command 'sudo ssh-keygen -A'
-
-
-
-
-VM_NAME=sff2
-   virt-clone --connect qemu:///system --original ${CLASSIFIER1_NAME} --name ${VM_NAME} --file ${VM_NAME}.img --mac=${VM_MAC[${VM_NAME}]}
-   if [ $? -ne 0 ]; then
-     echo "Error cloning image. Aborting"
-     exit -1
-   fi
-
-   sleep 3
-
-   sudo virt-sysprep -a ${VM_NAME}.img --hostname ${VM_NAME} --firstboot-command 'sudo ssh-keygen -A'
-
-   cat >meta-data <<EOF
-instance-id: ${VM_NAME}
-local-hostname: ${VM_NAME}
-EOF
-
-   rm -rf ${VM_NAME}-cidata.iso
-   genisoimage -output ${VM_NAME}-cidata.iso -volid cidata -joliet -rock user-data meta-data
-   chmod 666 ${VM_NAME}-cidata.iso
-
-   virsh change-media ${VM_NAME} hdb --eject --config --force
-   virsh change-media ${VM_NAME} hdb ${PWD}/${VM_NAME}-cidata.iso --insert --config --force
-
 
 
 
@@ -276,7 +197,7 @@ NEUTRON_DNS=$NEUTRON_EXT_NET_GW
 NEUTRON_FLOAT_RANGE_START="10.10.10.12"
 NEUTRON_FLOAT_RANGE_END="10.10.10.253"
 
-NEUTRON_FIXED_NET_CIDR="192.168.16.0/22"
+NEUTRON_FIXED_NET_CIDR="192.168.16.0/24"
 
 # Determine the tenant id for the configured tenant name.
 export TENANT_ID="$(openstack project list | grep $OS_TENANT_NAME | awk '{ print $2 }')"
@@ -324,7 +245,7 @@ openstack router create provider-router
 openstack router set --external-gateway ext_net provider-router
 openstack router add subnet provider-router mgmt_subnet
 
-openstack security group list -f value|awk '{print $1}'|xargs -I[] openstack security group delete []
+openstack security group list -f value|awk '{print $1}'|xargs -I[] openstack --insecure security group delete []
 
 #Configure the default security group to allow ICMP and SSH
 openstack security group rule create --proto icmp default || echo "should have been created already"
@@ -363,7 +284,11 @@ echo "Uploading images to glance"
 
 wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
 openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Trusty x86_64"  --file  trusty-server-cloudimg-amd64-disk1.img
+wget http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
+openstack image show  "Trusty x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare --public  "Xenial x86_64"  --file  xenial-server-cloudimg-amd64-disk1.img
+wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 openstack image show  "Centos 7 x86_64" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Centos 7 x86_64"  --file  $folder/CentOS-7-x86_64-GenericCloud.qcow2
+wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 openstack image show  "Cirros 0.3.4" > /dev/null 2>&1 || openstack image create --disk-format qcow2 --container-format bare  --public  "Cirros 0.3.4"  --file  $folder/cirros-0.3.4-x86_64-disk.img
 
 
@@ -691,12 +616,18 @@ USR=magonzalez
 IP=10.210.9.103
 USR=fortinet
 
+IP=192.168.122.2
+USR=root
+
 rsync --progress ~/sfc-multiple-sc/sfc-fgt/openstack/*                       ${USR}@${IP}:/home/${USR}
 
 rsync --progress ~/Downloads/fortios/*.qcow2                                 ${USR}@${IP}:/home/${USR}/cloud-images
+rsync --progress ~/Downloads/fortios/*.qcow2                                 root@${IP}:/root/cloud-images
 rsync --progress ~/Downloads/fortitester/*.qcow2                             ${USR}@${IP}:/home/${USR}/cloud-images
 rsync --progress ~/Downloads/mac-vwp-fortios/mac-vwp-fortios.qcow2           ${USR}@${IP}:/home/${USR}/cloud-images
 rsync --progress ~/Downloads/fortios/*.qcow2 ~/Downloads/fortitester/*.qcow2 ${USR}@${IP}:/home/${USR}/cloud-images
+
+sshuttle -r 10.210.8.17 192.168.122.0/24
 
 openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack security group delete []
 

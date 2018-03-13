@@ -88,3 +88,5 @@ virsh net-destroy virbr4
 virsh net-destroy virbr5
 virsh net-destroy virbr6
 virsh net-destroy virbr7
+
+ps -ef|grep karaf|grep -v grep|awk '{print $2}'|xargs -I[] kill -9 []

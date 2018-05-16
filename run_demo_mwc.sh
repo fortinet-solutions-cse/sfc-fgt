@@ -749,8 +749,10 @@ do
     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VM_IP ${COMMAND}
     if [ $? -ne 0 ]; then
       retries=$((retries-1))
-      echo "Retrying $VM_IP"
+      echo "Retrying $VM_IP. Times left: $retries"
       sleep 5
+    else
+      break
     fi
     if [ $retries -lt 0 ]; then
       echo "Error testing. Aborting"

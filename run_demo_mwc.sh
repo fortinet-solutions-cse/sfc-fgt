@@ -149,7 +149,7 @@ fi
 #************************************************
 # Set virtual networks with virsh
 #************************************************
-xterm -geometry 70x14+1450+24 -fg yellow -e watch virsh net-list --all &
+xterm -geometry 70x14+1450+24 -bg black -fg yellow -e watch virsh net-list --all &
 
 cat >virbr1 <<EOF
 <network>
@@ -239,7 +239,7 @@ sudo virsh net-create virbr7
 # Prepare Cloud Init for first VM
 #************************************************
 
-xterm -geometry 70x16+1450+250 -fg yellow -e watch virsh list --all &
+xterm -geometry 70x16+1450+250 -bg black -fg yellow -e watch virsh list --all &
 
 cat >meta-data <<EOF
 instance-id: ${CLASSIFIER1_NAME}
@@ -328,7 +328,7 @@ if [ $retries -eq 0 ] ; then
     exit -1
 fi
 
-xterm -geometry 110x25+650+255 -e "sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST}" &
+xterm -geometry 110x25+650+255 -bg black -fg yellow -e "sshpass -p karaf ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 8101 -l karaf ${LOCALHOST}" &
 
 #************************************************
 # Stop first VM (prior to clone image)
@@ -772,10 +772,10 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} 
 #************************************************
 # Demo: Run ICMP and HTTP traffic
 #************************************************
-xterm -geometry 55x30+20+20 -bg darkblue -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
-xterm -geometry 55x30+370+20 -bg darkblue -title "SF2PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
-xterm -geometry 55x30+720+20 -bg darkblue -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
-xterm -geometry 55x30+1070+20 -bg darkblue -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 55x30+20+20 -bg darkblue -fg white -title "SF1 Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF1_IP} "tail -F sf1_log.log" &
+xterm -geometry 55x30+370+20 -bg darkblue -fg white -title "SF2PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF2_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 55x30+720+20 -bg darkblue -fg white -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
+xterm -geometry 55x30+1070+20 -bg darkblue -fg white -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T7 -t1 --no-check-certificate http://www.google.com\' >>~/.bashrc;
  echo alias wf=\'wget -T7 -t1 --no-check-certificate http://www.facebook.com\' >>~/.bashrc;

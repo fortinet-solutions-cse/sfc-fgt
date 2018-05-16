@@ -777,10 +777,10 @@ xterm -geometry 55x30+370+20 -bg darkblue -title "SF2PROXY Log" -e ssh -t -o Str
 xterm -geometry 55x30+720+20 -bg darkblue -title "SF3PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF3_PROXY_IP} "tail -F proxy.log" &
 xterm -geometry 55x30+1070+20 -bg darkblue -title "SF4PROXY Log" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${SF4_PROXY_IP} "tail -F proxy.log" &
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T7 -t1 http://www.google.com\' >>~/.bashrc;
- echo alias wf=\'wget -T7 -t1 http://www.facebook.com\' >>~/.bashrc;
- echo alias wv=\'wget -T7 -t1 http://www.eicar.org/download/eicar.com\' >>~/.bashrc;
- echo alias wm=\'wget -T7 -t1 http://gmail.com\' >>~/.bashrc"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "echo alias wg=\'wget -T7 -t1 --no-check-certificate http://www.google.com\' >>~/.bashrc;
+ echo alias wf=\'wget -T7 -t1 --no-check-certificate http://www.facebook.com\' >>~/.bashrc;
+ echo alias wv=\'wget -T7 -t1 --no-check-certificate http://www.eicar.org/download/eicar.com\' >>~/.bashrc;
+ echo alias wm=\'wget -T7 -t1 --no-check-certificate http://gmail.com\' >>~/.bashrc"
 
 xterm -geometry 80x30+20+540 -bg grey -fg black -title "User 1 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app bash" &
 xterm -geometry 80x30+525+540 -bg grey -fg black -title "User 2 shell" -e ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLASSIFIER1_IP} "sudo ip netns exec app2 bash" &

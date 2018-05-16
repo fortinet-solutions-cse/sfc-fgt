@@ -743,11 +743,20 @@ VM_IPs="${CLASSIFIER1_IP} \
 
 for VM_IP in $VM_IPs;
 do
-  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VM_IP ${COMMAND}
-  if [ $? -ne 0 ]; then
-    echo "Error testing. Aborting"
-    exit -1
-  fi
+  retries=30
+  while [ $retries -gt 0 ]
+  do
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VM_IP ${COMMAND}
+    if [ $? -ne 0 ]; then
+      retries=$((retries-1))
+      echo "Retrying $VM_IP"
+      sleep 5
+    fi
+    if [ $retries -lt 0 ]; then
+      echo "Error testing. Aborting"
+      exit -1
+    fi
+  done
 done
 
 #************************************************

@@ -1,0 +1,19 @@
+{
+    "vim": {
+        "auth_url": "http://192.168.122.3:5000/v3",
+        "auth_cred": {
+            "username": "admin",
+            "user_domain_name": "Default",
+            "password": "opnfv-secret-password",
+            "user_id": "",
+            "cert_verify": "False"
+        },
+        "vim_project": {
+            "id": "",
+            "name": "admin",
+            "project_domain_name": "Default"
+        },
+        "name": "test-vim",
+        "type": "openstack"
+    }
+}

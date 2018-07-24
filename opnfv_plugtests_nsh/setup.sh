@@ -31,9 +31,12 @@ openstack server create --flavor tiny --image sfc_nsh_fraser --nic net-id=privat
 # Fortigate VNF
 pip install python-tackerclient==0.11.0
 
+# Tacker
 tacker vim-register --description "OpenStack XCI" --config-file vim.json openstack-xci
-tacker vnfd-create --vnfd-file fgt-vnfd.yaml FGT_VNFD
-tacker vnf-create --vim-name openstack-xci --vnfd-name FGT_VNFD FGT_VNF
-tacker vnffgd-create 
-tacker vnffg-create
+
+tacker vnfd-create --vnfd-file fgt-vnfd.yaml fgt_vnfd
+tacker vnf-create --vim-name openstack-xci --vnfd-name fgt_vnfd fgt_vnf
+
+tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt_vnffgd 
+tacker vnffg-create --vnffgd-name fgt_vnffgd fgt_vnfgg
 

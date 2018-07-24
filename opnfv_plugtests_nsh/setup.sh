@@ -25,8 +25,8 @@ openstack flavor create --ram 512 --disk 1 --vcpus 1 tiny
 
 # Client and Server VMs
 # Credentials: root/opnfv
-openstack server create --flavor tiny --image sfc_nsh_fraser --nic net-id=private client
-openstack server create --flavor tiny --image sfc_nsh_fraser --nic net-id=private server
+openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private client
+openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private server
 
 # Fortigate VNF
 pip install python-tackerclient==0.11.0

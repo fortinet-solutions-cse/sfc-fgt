@@ -1,7 +1,7 @@
 tosca_definitions_version: tosca_simple_profile_for_nfv_1_0_0
 description: firewall1-example
 metadata:
-  template_name: test-vnfd1
+  template_name: fgt-vnfd
 
 topology_template:
   node_templates:

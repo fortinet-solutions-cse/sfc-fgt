@@ -4,15 +4,17 @@
 # plus a Fortigate in between, using Service Chaining with Tacker
 
 # Networks
-
 openstack network create private
 openstack subnet create --subnet-range 192.168.0.0/24 --network private private_subnet
 
 openstack network create mgmt
 openstack subnet create --subnet-range 192.168.1.0/24 --network mgmt mgmt_subnet
 
-# Images
+# Security groups
+openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack --insecure security group delete []
+openstack security group rule create --protocol tcp --dst-port 22 default
 
+# Images
 wget http://artifacts.opnfv.org/sfc/images/sfc_nsh_fraser.qcow2
 openstack image create --file fgt-nsh-6.0.qcow2 --disk-format=qcow2 fgt-nsh-6.0
 openstack image create --file sfc_nsh_fraser.qcow2 --disk-format=qcow2 sfc-nsh-fraser
@@ -27,6 +29,11 @@ openstack server create --flavor tiny --image sfc_nsh_fraser --nic net-id=privat
 openstack server create --flavor tiny --image sfc_nsh_fraser --nic net-id=private server
 
 # Fortigate VNF
-tacker vnfd-create --vnf-file vnfd-xxxx.yaml VNFD1
-tacker vnf-create --vim VIM-ID --vnfd-id VNF-ID VNF1
+pip install python-tackerclient==0.11.0
+
+tacker vim-register --description "OpenStack XCI" --config-file vim.json openstack-xci
+tacker vnfd-create --vnfd-file fgt-vnfd.yaml FGT_VNFD
+tacker vnf-create --vim-name openstack-xci --vnfd-name FGT_VNFD FGT_VNF
+tacker vnffgd-create 
+tacker vnffg-create
 

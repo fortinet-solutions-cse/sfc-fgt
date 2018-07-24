@@ -1,0 +1,87 @@
+tosca_definitions_version: tosca_simple_profile_for_nfv_1_0_0
+description: firewall1-example
+metadata:
+  template_name: test-vnfd1
+
+topology_template:
+  node_templates:
+    VDU1:
+      type: tosca.nodes.nfv.VDU.Tacker
+      capabilities:
+        nfv_compute:
+          properties:
+            num_cpus: 1
+            mem_size: 1 GB
+            disk_size: 8 GB
+      properties:
+        image: fgt-nsh-6.0
+        availability_zone: nova:compute00
+        mgmt_driver: noop
+        config: |
+          param0: key1
+          param1: key2
+        service_type: firewall
+        monitoring_policy:
+          name: ping
+          parameters:
+            monitoring_delay: 10
+            count: 3
+            interval: 2
+            timeout: 2
+            action:
+              failure: respawn
+            retry: 5
+            port: 22
+
+    CP1:
+      type: tosca.nodes.nfv.CP.Tacker
+      properties:
+        management: true
+        order: 0
+        anti_spoofing_protection: false
+      requirements:
+        - virtualLink:
+            node: VL1
+        - virtualBinding:
+            node: VDU1
+
+    CP2:
+      type: tosca.nodes.nfv.CP.Tacker
+      properties:
+        order: 1
+        anti_spoofing_protection: false
+      requirements:
+        - virtualLink:
+            node: VL2
+        - virtualBinding:
+            node: VDU1
+
+    CP3:
+      type: tosca.nodes.nfv.CP.Tacker
+      properties:
+        order: 2
+        anti_spoofing_protection: false
+      requirements:
+        - virtualLink:
+            node: VL3
+        - virtualBinding:
+            node: VDU1
+
+    VL1:
+      type: tosca.nodes.nfv.VL
+      properties:
+        network_name: mgmt
+        vendor: Tacker
+
+    VL2:
+      type: tosca.nodes.nfv.VL
+      properties:
+        network_name: private
+        vendor: Tacker
+
+    VL3:
+      type: tosca.nodes.nfv.VL
+      properties:
+        network_name: private
+        vendor: Tacker
+

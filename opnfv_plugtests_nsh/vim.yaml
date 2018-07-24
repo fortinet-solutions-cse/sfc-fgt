@@ -1,0 +1,6 @@
+auth_url: 'http://192.168.122.3:5000/v3'
+username: 'admin'
+password: 'opnfv-secret-password'
+user_domain_name: 'Default'
+project_name: 'admin'
+project_domain_name: 'Default'

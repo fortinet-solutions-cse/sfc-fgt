@@ -1,0 +1,40 @@
+---
+tosca_definitions_version: tosca_simple_profile_for_nfv_1_0_0
+description: test-case1
+
+topology_template:
+  description: topology-template-test1
+  inputs:
+    net_src_port_id:
+      type: string
+
+  node_templates:
+    Forwarding_path1:
+      type: tosca.nodes.nfv.FP.Tacker
+      description: creates path
+      properties:
+        id: 1
+        policy:
+          type: ACL
+          criteria:
+            - network_src_port_id: {get_input: net_src_port_id}
+              destination_port_range: 80-80
+              ip_proto: 6
+        path:
+          - forwarder: fgt-vnfd
+            capability: CP2
+          - forwarder: fgt-vnfd
+            capability: CP3
+
+  groups:
+    VNFFG1:
+      type: tosca.groups.nfv.VNFFG
+      description: creates chain
+      properties:
+        vendor: tacker
+        version: 1.0
+        number_of_endpoints: 2
+        dependent_virtual_link: [VL2, VL3]
+        connection_point: [CP2, CP3]
+        constituent_vnfs: [fgt-vnfd, fgt-vnfd]
+      members: [Forwarding_path1]

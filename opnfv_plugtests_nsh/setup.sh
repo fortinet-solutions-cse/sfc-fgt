@@ -32,11 +32,11 @@ openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=privat
 pip install python-tackerclient==0.11.0
 
 # Tacker
-tacker vim-register --description "OpenStack XCI" --config-file vim.json openstack-xci
+tacker vim-register --description "OpenStack XCI" --config-file vim.yaml openstack-xci
 
 tacker vnfd-create --vnfd-file fgt-vnfd.yaml fgt-vnfd
 tacker vnf-create --vim-name openstack-xci --vnfd-name fgt-vnfd fgt-vnf
 
 tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 
-tacker vnffg-create --vnffgd-name fgt_vnffgd fgt-vnfgg
+tacker vnffg-create --vnffgd-name fgt-vnffgd fgt-vnfgg
 

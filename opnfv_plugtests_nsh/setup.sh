@@ -39,11 +39,9 @@ tacker vnf-create --vim-name openstack-xci --vnfd-name fgt-vnfd fgt-vnf
 
 # Generate param file for tacker
 cat /dev/null>param.file
-echo "net_src_port_id:"$(openstack port list |grep CP2 | awk '{print $2}')>>param.file
-echo "net_dst_port_id:"$(openstack port list |grep CP3 | awk '{print $2}')>>param.file
+echo "net_src_port_id: "$(openstack port list |grep CP2 | awk '{print $2}')>>param.file
+echo "net_dst_port_id: "$(openstack port list |grep CP3 | awk '{print $2}')>>param.file
 echo "ip_dst_prefix: 192.168.0.0/24" >> param.file
-
-
 
 tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 
 tacker vnffg-create --vnffgd-name fgt-vnffgd --param-file param.file fgt-vnfgg

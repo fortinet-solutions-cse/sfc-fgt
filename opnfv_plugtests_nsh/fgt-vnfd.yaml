@@ -63,7 +63,7 @@ topology_template:
         anti_spoofing_protection: false
       requirements:
         - virtualLink:
-            node: VL3
+            node: VL2
         - virtualBinding:
             node: VDU1
 
@@ -74,12 +74,6 @@ topology_template:
         vendor: Tacker
 
     VL2:
-      type: tosca.nodes.nfv.VL
-      properties:
-        network_name: private
-        vendor: Tacker
-
-    VL3:
       type: tosca.nodes.nfv.VL
       properties:
         network_name: private

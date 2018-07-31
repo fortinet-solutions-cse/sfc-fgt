@@ -4,9 +4,6 @@ description: test-case1
 
 topology_template:
   description: topology-template-test1
-  inputs:
-    net_src_port_id:
-      type: string
 
   node_templates:
     Forwarding_path1:

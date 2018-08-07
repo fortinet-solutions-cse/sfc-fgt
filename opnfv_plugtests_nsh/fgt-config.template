@@ -20,9 +20,12 @@ config system virtual-wire-pair
 end
 
 config firewall service-path
-   edit "srvp1"
-       set spi <spi_id_from_odl> 
-       #set si 255
+   # Use "set si 255" if service index setting is desired
+   edit "srvp-direct"
+       set spi <direct_spi_id_from_odl> 
+   next
+   edit "srvp-reverse"
+       set spi <reverse_spi_id_from_odl> 
    next
 end
 
@@ -35,6 +38,6 @@ config firewall policy
        set action accept
        set schedule "always"
        set service "ALL"
-       set src-service-path "srvp1"
+       set src-service-path "srvp-direct" "srvp-reverse"
    next
 end

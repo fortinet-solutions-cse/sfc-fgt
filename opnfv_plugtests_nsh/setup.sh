@@ -48,9 +48,13 @@ echo "net_dst_port_id: "${server_port}>>param.file
 echo "ip_dst_prefix: 192.168.0.0/24" >> param.file
 
 tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 
-tacker vnffg-create --vnffgd-name fgt-vnffgd --param-file param.file fgt-vnfgg
+tacker vnffg-create --vnffgd-name fgt-vnffgd --param-file param.file --symmetrical fgt-vnfgg
 
-spi=$(ssh root@192.168.122.4 "ovs-ofctl -O openflow13 dump-flows br-int| grep nsp" | grep  -P -o 'nsp=(\K[0-9]*)'|head -n1)
-sed -e 's/<spi_id_from_odl>/'${spi}'/g' fgt-config.template > fgt-config
+spi_direct=$(ssh root@192.168.122.4 "ovs-ofctl -O openflow13 dump-flows br-int| grep nsp" | grep  -P -o 'nsp=(\K[0-9]*)'|sort -h|uniq|head -n1)
+spi_reverse=$(ssh root@192.168.122.4 "ovs-ofctl -O openflow13 dump-flows br-int| grep nsp" | grep  -P -o 'nsp=(\K[0-9]*)'|sort -h|uniq|tail -n1)
+echo ${spi_direct}
+echo ${spi_reverse}
+sed -e 's/<direct_spi_id_from_odl>/'${spi_direct}'/g' fgt-config.template > fgt-config
+sed -i -e 's/<reverse_spi_id_from_odl>/'${spi_reverse}'/g' fgt-config
 
 

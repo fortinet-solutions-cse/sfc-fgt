@@ -1,17 +1,17 @@
 config system interface
    edit "port2"
        set type physical
-       set snmp-index 1
        set nsh enable
+       set arpforward disable
    next
    edit "port3"
        set type physical
-       set snmp-index 2
        set nsh enable
+       set arpforward disable
    next
 end
 
-# Add arp and ndisc disable
+# Add ndisc disable
 
 config system virtual-wire-pair
    edit "vwp1"

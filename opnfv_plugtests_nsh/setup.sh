@@ -15,7 +15,7 @@ openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack
 openstack security group rule create --protocol tcp --dst-port 22 default
 
 # Images
-wget http://artifacts.opnfv.org/sfc/images/sfc_nsh_fraser.qcow2
+ls sfc_nsh_fraser.qcow2 2>/dev/null || wget http://artifacts.opnfv.org/sfc/images/sfc_nsh_fraser.qcow2
 openstack image create --file fgt-nsh-6.0.qcow2 --disk-format=qcow2 fgt-nsh-6.0
 openstack image create --file sfc_nsh_fraser.qcow2 --disk-format=qcow2 sfc-nsh-fraser
 
@@ -38,9 +38,13 @@ tacker vnfd-create --vnfd-file fgt-vnfd.yaml fgt-vnfd
 tacker vnf-create --vim-name openstack-xci --vnfd-name fgt-vnfd fgt-vnf
 
 # Generate param file for tacker
+server_ip=$(openstack server list|grep server|awk '{print $8}'|grep -o -P '[0-9\.]*')
+client_ip=$(openstack server list|grep client|awk '{print $8}'|grep -o -P '[0-9\.]*')
+server_port=$(openstack port list|grep $server_ip|awk '{print $2}') 
+client_port=$(openstack port list|grep $client_ip|awk '{print $2}') 
 cat /dev/null>param.file
-echo "net_src_port_id: "$(openstack port list |grep CP2 | awk '{print $2}')>>param.file
-echo "net_dst_port_id: "$(openstack port list |grep CP3 | awk '{print $2}')>>param.file
+echo "net_src_port_id: "${client_port}>>param.file
+echo "net_dst_port_id: "${server_port}>>param.file
 echo "ip_dst_prefix: 192.168.0.0/24" >> param.file
 
 tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 

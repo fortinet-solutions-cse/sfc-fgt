@@ -1,23 +1,25 @@
-config system interface
-   edit "port2"
-       set type physical
-       set nsh enable
-       set arpforward disable
-   next
-   edit "port3"
-       set type physical
-       set nsh enable
-       set arpforward disable
-   next
-end
-
-# Add ndisc disable
-
 config system virtual-wire-pair
    edit "vwp1"
        set member "port2" "port3"
    next
 end
+
+config system interface
+   edit "port2"
+       set nsh enable
+       set arpforward disable
+       set ndiscforward disable
+   next
+   edit "port3"
+       set nsh enable
+       set arpforward disable
+       set ndiscforward disable
+   next
+end
+
+# Add ndisc disable
+
+
 
 config firewall service-path
    # Use "set si 255" if service index setting is desired

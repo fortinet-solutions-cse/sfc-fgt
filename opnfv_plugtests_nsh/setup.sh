@@ -101,8 +101,8 @@ retries=30
 while [ $retries -gt 0 ]
 do
  # Temporarily disabled until FGT enabled ndiscforward setting. This causes immediate ICMPv6 ndisc packets
- #cat fgt-config|ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${mgmt_ns} ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null admin@${fgt_ip}
- echo e
+ cat fgt-config|ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${mgmt_ns} ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null admin@${fgt_ip}
+ #echo e
  if [ $? -ne 0 ]; then
    retries=$((retries-1))
    echo "Retrying loading config into FortiGate. Times left: $retries"

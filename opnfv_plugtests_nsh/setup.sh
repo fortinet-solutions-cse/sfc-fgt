@@ -50,3 +50,7 @@ echo "ip_dst_prefix: 192.168.0.0/24" >> param.file
 tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 
 tacker vnffg-create --vnffgd-name fgt-vnffgd --param-file param.file fgt-vnfgg
 
+spi=$(ssh root@192.168.122.4 "ovs-ofctl -O openflow13 dump-flows br-int| grep nsp" | grep  -P -o 'nsp=(\K[0-9]*)'|head -n1)
+sed -e 's/<spi_id_from_odl>/'${spi}'/g' fgt-config.template > fgt-config
+
+

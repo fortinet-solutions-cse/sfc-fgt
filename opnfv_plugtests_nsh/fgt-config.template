@@ -21,8 +21,8 @@ end
 
 config firewall service-path
    edit "srvp1"
-       set spi 27
-       set si 255
+       set spi <spi_id_from_odl> 
+       #set si 255
    next
 end
 

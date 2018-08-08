@@ -1,0 +1,61 @@
+config system virtual-wire-pair
+   edit "vwp1"
+       set member "port2" "port3"
+   next
+end
+
+config system interface
+   edit "port2"
+       set nsh enable
+       set arpforward disable
+       set ndiscforward disable
+   next
+   edit "port3"
+       set nsh enable
+       set arpforward disable
+       set ndiscforward disable
+   next
+end
+
+# Add ndisc disable
+
+
+
+config firewall service-path
+   # Use "set si 255" if service index setting is desired
+   edit "srvp-direct"
+       set spi <direct_spi_id_from_odl> 
+   next
+   edit "srvp-reverse"
+       set spi <reverse_spi_id_from_odl> 
+   next
+   edit "srvp2-direct"
+       set spi <direct_spi_id_from_odl> 
+   next
+   edit "srvp2-reverse"
+       set spi <reverse_spi_id_from_odl> 
+   next
+end
+
+config firewall policy
+   edit 1
+       set srcintf "port2"
+       set dstintf "port3"
+       set srcaddr "all"
+       set dstaddr "all"
+       set action accept
+       set schedule "always"
+       set service "ALL"
+       set src-service-path "srvp-direct" "srvp-reverse"
+   next
+   edit 2
+       set srcintf "port2"
+       set dstintf "port3"
+       set srcaddr "all"
+       set dstaddr "all"
+       set action accept
+       set schedule "always"
+       set service "ALL"
+       set src-service-path "srvp2-direct" "srvp2-reverse"
+   next
+end

@@ -1,15 +1,12 @@
 #!/bin/bash
 
-# Creates the infrastructure needed to run a client/server vms
-# plus a Fortigate in between, using Service Chaining with Tacker
+# Creates the infrastructure needed to add a secondary server to show
+# multiple chains going through FortiGate
+
+# Always run after setup.sh
 
 if [ ! -f openrc ]; then
     echo "openrc file not found!"
-    exit -1
-fi
-
-if [ ! -f fgt-nsh-6.0.qcow2 ]; then
-    echo "fgt-nsh-6.0.qcow2 file not found!"
     exit -1
 fi
 
@@ -17,73 +14,28 @@ set -x
 
 source openrc
 
-# Networks
-openstack network create private
-openstack subnet create --subnet-range 192.168.0.0/24 --network private private_subnet
-
-openstack network create mgmt
-openstack subnet create --subnet-range 192.168.1.0/24 --network mgmt mgmt_subnet
-
-# Security groups
-openstack security group list|grep default|awk '{print $2}'|xargs -I[] openstack --insecure security group delete []
-openstack security group rule create --protocol tcp --dst-port 22 default
-
-# Images
-ls sfc_nsh_fraser.qcow2 2>/dev/null || wget http://artifacts.opnfv.org/sfc/images/sfc_nsh_fraser.qcow2
-openstack image create --file fgt-nsh-6.0.qcow2 --disk-format=qcow2 fgt-nsh-6.0
-openstack image create --file sfc_nsh_fraser.qcow2 --disk-format=qcow2 sfc-nsh-fraser
-
-# Flavors
-openstack flavor create --ram 1024 --disk 4 --vcpus 1 fortinet_small
-openstack flavor create --ram 512 --disk 1 --vcpus 1 tiny
-
-# Client and Server VMs
+# Server VM
 # Credentials: root/opnfv
-openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private client1
-openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private server1
+openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private client2
+openstack server create --flavor tiny --image sfc-nsh-fraser --nic net-id=private server2
 
-# Tacker CLI
-pip install python-tackerclient==0.11.0
-
-# Tacker
-tacker vim-register --description "OpenStack XCI" --config-file vim.yaml openstack-xci
-
-# Tacker Create VNFD/VNF for FortiGate
-tacker vnfd-create --vnfd-file fgt-vnfd.yaml fgt-vnfd
-tacker vnf-create --vim-name openstack-xci --vnfd-name fgt-vnfd fgt-vnf
-
-retries=30
-while [ $retries -gt 0 ]
-do
- openstack server list|grep fgt-nsh |grep ACTIVE 
- if [ $? -ne 0 ]; then
-   retries=$((retries-1))
-   echo "Waiting for FGT to be active before continuing. Times left: $retries"
-   sleep 5
- else
-   break
- fi
- if [ $retries -lt 0 ]; then
-   echo "Error: FortiGate VM does not seem to be ACTIVE. Aborting"
-   exit -1
- fi
-done
+sleep 5
 
 # Generate param file for tacker
-client_ip=$(openstack server list|grep client1|awk '{print $8}'|grep -o -P '[0-9\.]*')
-server_ip=$(openstack server list|grep server1|awk '{print $8}'|grep -o -P '[0-9\.]*')
+client_ip=$(openstack server list|grep client2|awk '{print $8}'|grep -o -P '[0-9\.]*')
+server_ip=$(openstack server list|grep server2|awk '{print $8}'|grep -o -P '[0-9\.]*')
 
-client_port=$(openstack port list|grep $client_ip|awk '{print $2}') 
 server_port=$(openstack port list|grep $server_ip|awk '{print $2}') 
+client_port=$(openstack port list|grep $client_ip|awk '{print $2}') 
 
-cat /dev/null>param.file
-echo "net_src_port_id: "${client_port}>>param.file
-echo "net_dst_port_id: "${server_port}>>param.file
-echo "ip_dst_prefix: 192.168.0.0/24" >> param.file
+cat /dev/null>param2.file
+echo "net_src_port2_id: "${client_port}>>param2.file
+echo "net_dst_port2_id: "${server_port}>>param2.file
+echo "ip_dst_prefix: 192.168.0.0/24" >> param2.file
 
 # Tacker Create VNFFGD/VNFFG
-tacker vnffgd-create --vnffgd-file fgt-vnffgd.yaml fgt-vnffgd 
-tacker vnffg-create --vnffgd-name fgt-vnffgd --param-file param.file --symmetrical fgt-vnffg
+tacker vnffgd-create --vnffgd-file fgt-vnffgd_2_chains.yaml fgt-vnffgd2 
+tacker vnffg-create --vnffgd-name fgt-vnffgd2 --param-file param2.file --symmetrical fgt-vnffg2
 
 sleep 10
 
@@ -134,14 +86,11 @@ ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.
 ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${private_ns} sshpass -p opnfv ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${server_ip} arp -a
 
 # Useful ssh commands
-set +x
-echo
 echo Access FortiGate CLI: 
 echo ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${mgmt_ns} ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null admin@${fgt_ip}
-echo 
+
 echo Access Client CLI:
 echo ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${private_ns} sshpass -p opnfv ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${client_ip} 
-echo
-echo Access Server CLI:
+
+echo Access Second Server CLI:
 echo ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@192.168.122.3 ip netns exec ${private_ns} sshpass -p opnfv ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${server_ip} 
-echo

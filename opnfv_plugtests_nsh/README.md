@@ -6,6 +6,10 @@ The environment is based on Tacker, Networking SFC, OpenVSwitch and OpenDayLight
 
 1. Please go to https://wiki.opnfv.org/display/sfc/Deploy+OPNFV+SFC+scenarios and follow instructions to install OPNFV XCI.
 
+1.1 Immediately after cloning releng-xci repository and before starting XCI installation please make sure you select the commit below, as it contains a valid and working procedure to install XCI:
+
+`git checkout c1ef2d45fe71dda92ec2f015b2ccd70ce2855d85`
+
 2. After a couple hours you will get an OpenStack environment in one single Vm.
 
 Internally you will see three or more VMs

@@ -18,8 +18,8 @@ computes:   ssh root@192.168.122.4 (.5, .6, etc.)<br><br>
 4. Navigate to:<br><br>
 `cd sfc-fgt/opnfv_plugtests_nsh/`<br><br>
 5. Make sure you have an image of FortiGate with NSH support. Name it: fgt-nsh-6.0.qcow2<br><br>
-`scp 192.168.122.1:/root/fgt-nsh-6.0.qcow2 .`<br><br>
-(This assumes the image is already in the host)<br><br>
+`scp your_user@192.168.122.1:/your_home_path/fgt-nsh-6.0.qcow2 ~/sfc_fgt/opnfv_plugtests_nsh/`<br><br>
+(This command assumes the image is already in your host from where you installed XCI)<br><br>
 6. Copy openrc file from home to this directory:<br><br>
 `cp ~/openrc .`<br><br>
 7. Run setup script<br><br>

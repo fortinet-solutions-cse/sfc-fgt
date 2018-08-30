@@ -2,6 +2,8 @@
 
 set -x
 
+source openrc
+
 tacker vnffg-delete fgt-vnffg
 tacker vnffgd-delete fgt-vnffgd
 
@@ -14,7 +16,7 @@ tacker vnfd-delete fgt-vnfd
 # Not needed
 openstack image delete fgt-nsh-6.0 sfc-nsh-fraser
 
-openstack server delete client server
+openstack server delete client1 server1
 
 openstack flavor delete tiny fortinet_small
 

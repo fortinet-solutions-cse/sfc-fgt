@@ -2,8 +2,7 @@
 #To be done in ubuntu 16.04.2LTS
 
 sudo apt-get install -y  openjdk-8-jdk
-sudo apt-get install -y qemu-kvm libvirt-bin libguestfs-tools virtinst
-sudo apt-get install -y sshpass wget curl openssh-client xterm
+sudo apt-get install -y qemu-kvm libvirt-bin libguestfs-tools virtinst qemu-utils sshpass wget curl openssh-client xterm
 
 #Manual
 #Generate public key in default dir (~/.ssh/id_rsa.pub)

@@ -497,7 +497,7 @@ end
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF2_NAME}-cidata.iso cfg-drv-fgt
-virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF2_NAME} --ram 1024 --vcpus 1 --disk fortios.qcow2,size=3 --disk fgt-logs.qcow2,size=30 --disk ${SF2_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF2_MAC_ADMIN},model=virtio --network bridge=virbr2,mac=${SF2_MAC},model=virtio --network bridge=virbr3,mac=${SF2_MAC2},model=virtio
+virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF2_NAME} --ram 1024 --vcpus 1 --disk fortios.qcow2,size=2 --disk fgt-logs.qcow2,size=1 --disk ${SF2_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF2_MAC_ADMIN},model=virtio --network bridge=virbr2,mac=${SF2_MAC},model=virtio --network bridge=virbr3,mac=${SF2_MAC2},model=virtio
 
 sleep 5
 
@@ -569,7 +569,7 @@ end
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF3_NAME}-cidata.iso cfg-drv-fgt2
-virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF3_NAME} --ram 1024 --vcpus 1 --disk fortios2.qcow2,size=3 --disk fgt-logs2.qcow2,size=30 --disk ${SF3_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF3_MAC_ADMIN},model=virtio --network bridge=virbr4,mac=${SF3_MAC},model=virtio --network bridge=virbr5,mac=${SF3_MAC2},model=virtio
+virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF3_NAME} --ram 1024 --vcpus 1 --disk fortios2.qcow2,size=2 --disk fgt-logs2.qcow2,size=1 --disk ${SF3_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF3_MAC_ADMIN},model=virtio --network bridge=virbr4,mac=${SF3_MAC},model=virtio --network bridge=virbr5,mac=${SF3_MAC2},model=virtio
 
 sleep 5
 
@@ -666,7 +666,7 @@ end
 EOF
 
 sudo mkisofs -publisher "OpenStack Nova 12.0.2" -J -R -V config-2 -o ${SF4_NAME}-cidata.iso cfg-drv-fgt3
-virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF4_NAME} --ram 1024 --vcpus 1 --disk fortios3.qcow2,size=3 --disk fgt-logs3.qcow2,size=30 --disk ${SF4_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF4_MAC_ADMIN},model=virtio --network bridge=virbr6,mac=${SF4_MAC},model=virtio --network bridge=virbr7,mac=${SF4_MAC2},model=virtio
+virt-install --connect qemu:///system --noautoconsole --filesystem ${PWD},shared_dir --import --name ${SF4_NAME} --ram 1024 --vcpus 1 --disk fortios3.qcow2,size=2 --disk fgt-logs3.qcow2,size=1 --disk ${SF4_NAME}-cidata.iso,device=cdrom,bus=ide,format=raw,cache=none --network bridge=virbr0,mac=${SF4_MAC_ADMIN},model=virtio --network bridge=virbr6,mac=${SF4_MAC},model=virtio --network bridge=virbr7,mac=${SF4_MAC2},model=virtio
 
 sleep 5
 
